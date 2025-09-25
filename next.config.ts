@@ -1,7 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // experimental: {
+  //   serverComponentsExternalPackages: ["knex", "better-sqlite3"],
+  // },
+  serverExternalPackages: ["knex", "better-sqlite3"],
 };
 
 export default nextConfig;

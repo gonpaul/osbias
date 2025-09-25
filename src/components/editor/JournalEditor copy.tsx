@@ -1,0 +1,396 @@
+'use client';
+
+import React, { useEffect, useRef, useState, useCallback } from 'react';
+import MarkdownPreview from './MarkdownPreview';
+import { EditorState } from "@codemirror/state";
+import { EditorView, basicSetup } from "codemirror";
+import { vim } from "@replit/codemirror-vim";
+import { keymap, drawSelection } from "@codemirror/view";
+import { history, historyKeymap } from "@codemirror/commands";
+import { defaultKeymap } from "@codemirror/commands";
+
+type ID = number;
+
+type JournalEntry = {
+  id: ID;
+  user_id: ID;
+  framework_id: ID | null;
+  title: string;
+  content: string;
+  created_at?: string;
+  updated_at?: string;
+};
+
+type SaveState = 'idle' | 'saving' | 'saved' | 'error';
+
+// MarkdownPreview handles secure rendering; no more manual HTML conversion
+
+function VimEditor({
+  value,
+  onChange,
+  editable = true,
+}: {
+  value: string;
+  onChange: (val: string) => void;
+  editable?: boolean;
+}) {
+  const editorRef = useRef<HTMLDivElement | null>(null);
+  const viewRef = useRef<EditorView | null>(null);
+
+  useEffect(() => {
+    if (!editorRef.current) return;
+
+    // Only create the editor once
+    if (viewRef.current) return;
+
+
+    const customTheme = EditorView.theme({
+        // Thin caret (insert mode)
+        ".cm-cursor": { borderLeftColor: "white" },
+
+    //     // Block cursor (normal mode in Vim)
+    //     ".cm-fat-cursor .cm-cursor": { 
+    //       backgroundColor: "blue", 
+    //       opacity: 0.7, 
+    //       borderLeft: "none" 
+    //     },
+    //     // Optional: selection color tweak
+    //     ".cm-selectionBackground": { backgroundColor: "rgba(0,0,255,0.3)" },
+    })
+
+    const state = EditorState.create({
+      doc: value,
+      extensions: [
+        // basicSetup.filter((ext) => ext !== lineNumbers()), // remove line numbers
+        keymap.of([...defaultKeymap, ...historyKeymap]),
+        history(),
+        drawSelection(),
+        vim(),
+        // EditorView.editable.of(editable),
+        EditorView.updateListener.of((update) => {
+          if (update.docChanged) {
+            const newVal = update.state.doc.toString();
+            onChange(newVal);
+          }
+        }),
+        customTheme,
+      ],
+    });
+
+    const view = new EditorView({
+      state,
+      parent: editorRef.current,
+    });
+
+    viewRef.current = view;
+
+    return () => {
+      view.destroy();
+      viewRef.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Keep editor in sync with value prop (when switching entries)
+  useEffect(() => {
+    if (viewRef.current) {
+      const currentVal = viewRef.current.state.doc.toString();
+      if (value !== currentVal) {
+        viewRef.current.dispatch({
+          changes: {
+            from: 0,
+            to: currentVal.length,
+            insert: value,
+          },
+        });
+      }
+    }
+  }, [value]);
+
+  // Update editable state if needed
+//   useEffect(() => {
+//     if (viewRef.current) {
+//       viewRef.current.dispatch({
+//         effects: EditorView.editable.of(editable),
+//       });
+//     }
+//   }, [editable]);
+
+  return (
+    <div
+      ref={editorRef}
+      style={{
+        // border: "1px solid #333",
+        // borderRadius: "0.5rem",
+        background: "var(--darkelbg, #181a20)",
+        minHeight: 240,
+        height: "100%",
+        width: "100%",
+        fontSize: "1rem",
+        overflow: "auto",
+      }}
+      tabIndex={0}
+    />
+  );
+}
+
+export default function JournalEditor() {
+  const [entries, setEntries] = useState<JournalEntry[]>([]);
+  const [current, setCurrent] = useState<JournalEntry | null>(null);
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
+  const [saveState, setSaveState] = useState<SaveState>('idle');
+  const [preview, setPreview] = useState(false);
+
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const dirtyRef = useRef(false);
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const res = await fetch('/api/journal', {
+        credentials: 'include'
+      });
+      if (!active) return;
+      if (res.ok) {
+        const data = await res.json() as JournalEntry[];
+        setEntries(data);
+        if (data.length > 0) {
+          const first = data[0];
+          setCurrent(first);
+          setTitle(first.title || '');
+          setContent(first.content || '');
+        }
+      }
+    })();
+    return () => { active = false; };
+  }, []);
+
+  const selectEntry = async (e: JournalEntry) => {
+    setCurrent(e);
+    setTitle(e.title || '');
+    setContent(e.content || '');
+    setSaveState('idle');
+  };
+
+  const createNew = async () => {
+    // In autosave flow, we can delay POST until user types.
+    const draft: JournalEntry = {
+      id: -1,
+      user_id: -1,
+      framework_id: null,
+      title: 'Untitled',
+      content: ''
+    };
+    setCurrent(draft);
+    setTitle('Untitled');
+    setContent('');
+    setSaveState('idle');
+  };
+
+  const saveNow = async () => {
+    if (!dirtyRef.current) return;
+    setSaveState('saving');
+    try {
+      if (!current || current.id === -1) {
+        const res = await fetch('/api/journal', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            title: title || 'Untitled',
+            content,
+          })
+        });
+        if (!res.ok) throw new Error('POST failed');
+        const created = await res.json() as JournalEntry;
+        setCurrent(created);
+        setEntries(prev => [created, ...prev]);
+      } else {
+        const res = await fetch(`/api/journal/${current.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            title,
+            content
+          })
+        });
+        if (!res.ok) throw new Error('PUT failed');
+        const updated = await res.json() as JournalEntry;
+        setCurrent(updated);
+        setEntries(prev =>
+          prev.map(x => x.id === updated.id ? updated : x)
+        );
+      }
+      setSaveState('saved');
+      dirtyRef.current = false;
+    } catch (e) {
+      setSaveState('error');
+    }
+  };
+
+  const scheduleSave = useCallback(() => {
+    dirtyRef.current = true;
+    setSaveState('idle');
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      void saveNow();
+    }, 1200);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [title, content, current]);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
+
+  // Preview is rendered via MarkdownPreview
+
+  const deleteEntry = async (id: ID) => {
+    if (id === -1) {
+      setCurrent(null);
+      setTitle('');
+      setContent('');
+      return;
+    }
+    const res = await fetch(`/api/journal/${id}`, {
+      method: 'DELETE',
+      credentials: 'include'
+    });
+    if (res.status === 204) {
+      setEntries(prev => prev.filter(x => x.id !== id));
+      if (current && current.id === id) {
+        const next = entries.find(x => x.id !== id) || null;
+        setCurrent(next || null);
+        setTitle(next?.title || '');
+        setContent(next?.content || '');
+      }
+    }
+  };
+
+  const Saving = () => {
+    let text = '';
+    if (saveState === 'saving') text = 'Saving...';
+    else if (saveState === 'saved') text = 'Saved';
+    else if (saveState === 'error') text = 'Error';
+    return (
+      <span className="text-xs text-(--secondary)">
+        {text}
+      </span>
+    );
+  };
+
+  // Keyboard shortcut: Alt+P to toggle preview
+  const handlePreviewKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
+    if (
+      e.altKey &&
+      (e.key === 'p' || e.key === 'P')
+    ) {
+      e.preventDefault();
+      setPreview(p => !p);
+    }
+  };
+
+  return (
+    <div className="flex flex-col h-full w-full px-6">
+      <div className="flex items-center gap-2 py-4">
+        <div className="flex items-center gap-2">
+          {/* <label className="text-xs text-(--secondary)">
+            Entry
+          </label> */}
+          <select
+            className="text-md cursor-pointer bg-(--darkelbg) text-(--foreground)
+                       px-2 py-1 rounded min-w-56"
+            value={current?.id ?? ''}
+            onChange={(e) => {
+              const id = Number(e.target.value);
+              const found = entries.find(x => x.id === id);
+              if (found) void selectEntry(found);
+            }}
+          >
+            {entries.map(e => (
+              <option key={e.id} value={e.id}>
+                {e.title || `Entry ${e.id}`}
+              </option>
+            ))}
+            {!current && (
+              <option value="" disabled>
+                Select entry
+              </option>
+            )}
+          </select>
+          <button
+            className="cursor-pointer px-3 py-1 rounded
+                        bg-(--emphasis) text-white text-sm
+                        hover:opacity-80"
+            onClick={createNew}
+            >
+            New
+          </button>
+          {current && (
+            <button
+              className="cursor-pointer px-3 py-1 rounded
+                         bg-red-600 text-white text-sm
+                         hover:opacity-80"
+              onClick={() => void deleteEntry(current.id)}
+            >
+              Delete
+            </button>
+          )}
+        </div>
+        <div className="flex-1" />
+        <button
+          className={`cursor-pointer px-3 py-1 rounded text-sm
+                      ${preview
+                        ? 'bg-(--emphasis) text-white'
+                        : 'bg-(--darkelbg) text-(--foreground)'}`}
+          onClick={() => setPreview(p => !p)}
+          onKeyDown={handlePreviewKeyDown}
+        >
+          {preview ? 'Edit' : 'Preview'}
+        </button>
+        <Saving />
+      </div>
+
+      <input
+        className="w-full px-3 py-2 mb-2 rounded border-none
+                   focus:outline-none bg-transparent
+                   text-xl font-semibold"
+        placeholder="Title..."
+        value={title}
+        onChange={(e) => {
+          setTitle(e.target.value);
+          scheduleSave();
+        }}
+      />
+
+      {preview ? (
+        <div className="flex-1 w-full rounded bg-transparent overflow-auto" style={{ padding: '0.75rem' }}>
+          <MarkdownPreview content={content} />
+        </div>
+      ) : (
+        <div className="flex-1 w-full">
+          {/* <VimEditor
+            value={content}
+            onChange={val => {
+              setContent(val);
+              scheduleSave();
+            }}
+          /> */}
+          <textarea
+            className="w-full h-full min-h-[300px] px-3 py-2 rounded border-none focus:outline-none bg-transparent text-base font-mono resize-none"
+            placeholder="Write your entry..."
+            value={content}
+            onChange={e => {
+              setContent(e.target.value);
+              scheduleSave();
+            }}
+            spellCheck={true}
+          />
+        </div>
+      )}
+    </div>
+  );
+}

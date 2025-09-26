@@ -1,12 +1,11 @@
 'use client';
 
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { createRoot, Root } from 'react-dom/client';
 import MarkdownPreview from './MarkdownPreview';
-import { EditorState, StateEffect, StateField, Compartment, Range } from "@codemirror/state";
+import { EditorState } from "@codemirror/state";
 import { EditorView, basicSetup } from "codemirror";
 import { vim } from "@replit/codemirror-vim";
-import { keymap, drawSelection, Decoration, WidgetType } from "@codemirror/view";
+import { keymap, drawSelection } from "@codemirror/view";
 import { history, historyKeymap } from "@codemirror/commands";
 import { defaultKeymap } from "@codemirror/commands";
 import { useSelector, useDispatch } from 'react-redux';
@@ -24,182 +23,139 @@ import {
 
 type ID = number;
 
-// CodeMirror-based editor that can optionally enable Vim mode and supports
-// embedding a popup as a line widget (block decoration) on Ctrl+K.
-function CMEditor({
+// Measure approximate caret coordinates for a textarea at a given index.
+// Returns coordinates relative to the textarea's content box (accounting for
+// scroll, padding, borders, wrapping, font, etc.).
+function measureTextareaCaret(
+  textarea: HTMLTextAreaElement,
+  index: number,
+): { top: number; left: number } {
+  const taStyle = window.getComputedStyle(textarea);
+  const div = document.createElement('div');
+
+  const properties = [
+    'boxSizing', 'width', 'height', 'overflow', 'overflowX', 'overflowY',
+    'borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth',
+    'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft',
+    'fontStyle', 'fontVariant', 'fontWeight', 'fontStretch', 'fontSize',
+    'fontFamily', 'lineHeight', 'letterSpacing', 'textTransform', 'textAlign',
+    'textIndent', 'whiteSpace', 'wordBreak', 'wordWrap'
+  ];
+
+  properties.forEach((prop) => {
+    // @ts-ignore
+    div.style[prop] = taStyle.getPropertyValue(prop);
+  });
+
+  div.style.position = 'absolute';
+  div.style.visibility = 'hidden';
+  div.style.whiteSpace = 'pre-wrap';
+  div.style.wordWrap = 'break-word';
+  div.style.overflow = 'hidden';
+  div.style.width = textarea.clientWidth + 'px';
+
+  const value = textarea.value;
+  const safeIndex = Math.max(0, Math.min(index, value.length));
+  const before = value.substring(0, safeIndex);
+  const after = value.substring(safeIndex) || ' ';
+
+  const span = document.createElement('span');
+  span.textContent = after[0];
+  div.textContent = before;
+  div.appendChild(span);
+
+  document.body.appendChild(div);
+
+  const taRect = textarea.getBoundingClientRect();
+  const spanRect = span.getBoundingClientRect();
+
+  const top = spanRect.top - taRect.top - textarea.scrollTop;
+  const left = spanRect.left - taRect.left - textarea.scrollLeft;
+
+  document.body.removeChild(div);
+  return { top, left };
+}
+
+function VimEditor({
   value,
   onChange,
   editable = true,
-  vimEnabled = false,
 }: {
   value: string;
   onChange: (val: string) => void;
   editable?: boolean;
-  vimEnabled?: boolean;
 }) {
   const editorRef = useRef<HTMLDivElement | null>(null);
   const viewRef = useRef<EditorView | null>(null);
-  const vimCompartmentRef = useRef<Compartment | null>(null);
-  const onChangeRef = useRef(onChange);
-  onChangeRef.current = onChange;
 
   useEffect(() => {
     if (!editorRef.current) return;
+
+    // Only create the editor once
     if (viewRef.current) return;
 
     const customTheme = EditorView.theme({
+      // Thin caret (insert mode)
       ".cm-cursor": { borderLeftColor: "white" },
-      ".cm-selectionBackground, .cm-selectionLayer .cm-selectionBackground": {
-        background: "var(--emphasis) !important"
-      },
-      ".cm-activeLine": {
-        background: "#2a2a3a"
-      },
-      // Vim normal mode block (fat) cursor
-      // ".cm-fat-cursor .cm-cursor": {
-      //   backgroundColor: "#2a2a3a !important",
-      //   borderLeft: "none !important",
-      //   width: "auto !important",
-      //   opacity: 1
-      // },
-      // ".cm-fat-cursor-mark": {
-      //   backgroundColor: "#2a2a3a !important"
-      // },
-      // ".cm-fat-cursor": {
-      //   caretColor: "transparent !important"
-      // }
+      // ".cm-fat-cursor .cm-cursor": { backgroundColor: "blue", opacity: 0.7, borderLeft: "none" },
+      // ".cm-selectionBackground": { backgroundColor: "rgba(0,0,255,0.3)" },
     });
-
-    const addPopup = StateEffect.define<Range<Decoration>>();
-    const clearPopups = StateEffect.define<null>();
-
-    const popupField = StateField.define<{ deco: any }>({
-      create() {
-        return { deco: Decoration.none };
-      },
-      update(field, tr) {
-        let deco = field.deco.map(tr.changes);
-        for (const e of tr.effects) {
-          if (e.is(addPopup)) deco = deco.update({ add: [e.value] });
-          if (e.is(clearPopups)) deco = Decoration.none;
-        }
-        return { deco };
-      },
-      provide: f => EditorView.decorations.from(f, v => v.deco),
-    });
-
-    class PopupWidget extends WidgetType {
-      private selectedText: string;
-      private onClose: () => void;
-      private root: Root | null = null;
-      constructor(selectedText: string, onClose: () => void) {
-        super();
-        this.selectedText = selectedText;
-        this.onClose = onClose;
-      }
-      eq(other: PopupWidget) { return other.selectedText === this.selectedText; }
-      toDOM() {
-        const container = document.createElement('div');
-        container.style.margin = '8px 0';
-        this.root = createRoot(container);
-        this.root.render(
-          <CMInlineChat selectedText={this.selectedText} onClose={this.onClose} />
-        );
-        return container;
-      }
-      destroy(dom: HTMLElement) {
-        if (this.root) {
-          this.root.unmount();
-          this.root = null;
-        }
-        super.destroy(dom);
-      }
-      // Let events inside the widget be handled by the widget's DOM (React input)
-      // Returning true tells CodeMirror to ignore these events and not treat
-      // them as editor interactions (fixes typing being inserted into editor).
-      ignoreEvent() { return true; }
-    }
-
-    const vimCompartment = new Compartment();
-    vimCompartmentRef.current = vimCompartment;
 
     const state = EditorState.create({
       doc: value,
       extensions: [
-        // basicSetup,
+        // basicSetup.filter((ext) => ext !== lineNumbers()), // remove line numbers
         keymap.of([...defaultKeymap, ...historyKeymap]),
         history(),
         drawSelection(),
-        EditorView.editable.of(true),
-        EditorView.lineWrapping,
+        vim(),
+        // EditorView.editable.of(editable),
         EditorView.updateListener.of((update) => {
           if (update.docChanged) {
-            onChangeRef.current(update.state.doc.toString());
+            const newVal = update.state.doc.toString();
+            onChange(newVal);
           }
         }),
         customTheme,
-        popupField,
-        vimCompartment.of([]),
       ],
     });
 
-    const view = new EditorView({ state, parent: editorRef.current });
+    const view = new EditorView({
+      state,
+      parent: editorRef.current,
+    });
+
     viewRef.current = view;
 
-    const onKeyDown = (ev: KeyboardEvent) => {
-      if ((ev.ctrlKey || ev.metaKey) && (ev.key === 'k' || ev.key === 'K')) {
-        ev.preventDefault();
-        const sel = view.state.selection.main;
-        const selectedText = view.state.doc.sliceString(sel.from, sel.to);
-        const line = view.state.doc.lineAt(sel.from);
-        const deco = Decoration.widget({
-          widget: new PopupWidget(selectedText, () => {
-            view.dispatch({ effects: [clearPopups.of(null)] });
-            // Return focus to the editor so user can type immediately
-            // Use a microtask to ensure DOM updates have applied
-            Promise.resolve().then(() => view.focus());
-          }),
-          block: true,
-          side: 1,
-        }).range(line.from);
-        view.dispatch({ effects: [clearPopups.of(null), addPopup.of(deco)] });
-      }
-    };
-    view.dom.addEventListener('keydown', onKeyDown, true);
-
     return () => {
-      view.dom.removeEventListener('keydown', onKeyDown, true);
       view.destroy();
       viewRef.current = null;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Keep editor in sync with value prop
+  // Keep editor in sync with value prop (when switching entries)
   useEffect(() => {
-    const view = viewRef.current;
-    if (!view) return;
-    const currentVal = view.state.doc.toString();
-    if (value !== currentVal) {
-      view.dispatch({
-        changes: { from: 0, to: currentVal.length, insert: value },
-      });
+    if (viewRef.current) {
+      const currentVal = viewRef.current.state.doc.toString();
+      if (value !== currentVal) {
+        viewRef.current.dispatch({
+          changes: {
+            from: 0,
+            to: currentVal.length,
+            insert: value,
+          },
+        });
+      }
     }
   }, [value]);
-
-  // Toggle Vim
-  useEffect(() => {
-    const view = viewRef.current;
-    const vimCompartment = vimCompartmentRef.current;
-    if (!view || !vimCompartment) return;
-    view.dispatch({
-      effects: vimCompartment.reconfigure(vimEnabled ? [vim()] : []),
-    });
-  }, [vimEnabled]);
 
   return (
     <div
       ref={editorRef}
       style={{
+        // border: "1px solid #333",
+        // borderRadius: "0.5rem",
         background: "var(--darkelbg, #181a20)",
         minHeight: 240,
         height: "100%",
@@ -212,63 +168,17 @@ function CMEditor({
   );
 }
 
-function CMInlineChat({ selectedText, onClose }: { selectedText: string; onClose: () => void }) {
-  const [input, setInput] = useState('');
-  const inputRef = useRef<HTMLTextAreaElement | null>(null);
-  useEffect(() => {
-    inputRef.current?.focus();
-    if (inputRef.current) {
-      inputRef.current.style.height = 'auto';
-      inputRef.current.style.height = inputRef.current.scrollHeight + 'px';
-    }
-  }, []);
-  useEffect(() => {
-    const el = inputRef.current;
-    if (!el) return;
-    el.style.height = 'auto';
-    el.style.height = el.scrollHeight + 'px';
-  }, [input]);
-  return (
-    <div
-      className="z-50 min-h-25 relative bg-(--background) border border-gray-700 rounded-lg shadow-lg p-4 w-[420px] max-w-[95%]"
-      tabIndex={-1}
-      onClick={e => e.stopPropagation()}
-    >
-      <button
-        className="absolute top-6 right-8 text-gray-400 hover:text-gray-200 text-xl font-bold focus:outline-none"
-        style={{ lineHeight: 1 }}
-        onClick={onClose}
-        aria-label="Close"
-        tabIndex={0}
-      >
-        &times;
-      </button>
-      {/* Show selected text if needed */}
-      {/* <div className="text-sm text-(--secondary) mb-2">{selectedText}</div> */}
-      <textarea
-        className="w-full px-2 py-1 pr-10 rounded border-none focus:outline-none text-base mb-2 resize-none overflow-hidden whitespace-pre-wrap break-words"
-        placeholder="Ask about the selected text..."
-        value={input}
-        onChange={e => setInput(e.target.value)}
-        ref={inputRef}
-        rows={1}
-        onKeyDown={e => {
-          if (e.key === 'Escape') onClose();
-        }}
-      />
-      <div className="flex justify-end gap-2" />
-    </div>
-  );
-}
 
 function InlineChatPopup({
   open,
   onClose,
   selectedText,
+  style,
 }: {
   open: boolean;
   onClose: () => void;
   selectedText: string;
+  style?: React.CSSProperties;
 }) {
   const [input, setInput] = useState('');
   const popupRef = useRef<HTMLDivElement | null>(null);
@@ -291,14 +201,13 @@ function InlineChatPopup({
     };
   }, [open, onClose]);
 
-  // For demo, just echo the selected text and input
-  // In real use, you would call an API here
   return open ? (
     <div
       ref={popupRef}
-      className="fixed z-50 left-4/10 top-1/3 min-h-25 transform -translate-x-1/2 bg-(--background) border border-gray-700 rounded-lg shadow-lg p-4 w-[420px] max-w-[95vw]"
+      className="z-50 min-h-25 bg-(--background) border border-gray-700 rounded-lg shadow-lg p-4 w-[420px] max-w-[95vw]"
       tabIndex={-1}
       onClick={e => e.stopPropagation()}
+      style={{ position: 'absolute', ...style }}
     >
       {/* X close button in top right */}
       <button
@@ -348,7 +257,8 @@ export default function JournalEditor() {
   // Inline chat popup state
   const [chatOpen, setChatOpen] = useState(false);
   const [chatSelectedText, setChatSelectedText] = useState('');
-  const [vimMode, setVimMode] = useState(false);
+  const taRef = useRef<HTMLTextAreaElement | null>(null);
+  const [popupStyle, setPopupStyle] = useState<React.CSSProperties>({});
 
   useEffect(() => {
     latestTitleRef.current = title;
@@ -467,18 +377,6 @@ export default function JournalEditor() {
     }
   };
 
-  // Global shortcut: Alt+V for Vim mode
-  useEffect(() => {
-    const onGlobalKey = (e: KeyboardEvent) => {
-      if (e.altKey && (e.key === 'v' || e.key === 'V')) {
-        e.preventDefault();
-        setVimMode(prev => !prev);
-      }
-    };
-    window.addEventListener('keydown', onGlobalKey, true);
-    return () => window.removeEventListener('keydown', onGlobalKey, true);
-  }, []);
-
   // Handler for Ctrl+K shortcut in textarea
   const handleTextareaKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     // ctrlKey for Windows/Linux, metaKey for Mac (Cmd)
@@ -503,18 +401,68 @@ export default function JournalEditor() {
     setTimeout(() => setChatSelectedText(''), 200);
   };
 
+  // Compute popup position relative to the textarea wrapper when chat opens
+  useEffect(() => {
+    if (!chatOpen) return;
+    const ta = taRef.current;
+    if (!ta) return;
+
+    const start = ta.selectionStart;
+    const end = ta.selectionEnd;
+
+    const startPos = measureTextareaCaret(ta, start);
+    const endPos = measureTextareaCaret(ta, end);
+
+    const container = ta.parentElement as HTMLElement; // relative wrapper
+    if (!container) return;
+
+    const containerRect = container.getBoundingClientRect();
+    const taRect = ta.getBoundingClientRect();
+    const lineHeight = parseFloat(
+      window.getComputedStyle(ta).lineHeight || '20'
+    );
+
+    const lineTop = taRect.top + startPos.top - containerRect.top;
+    const lineBottom = taRect.top + endPos.top - containerRect.top + lineHeight;
+
+    const GAP = 8;
+    const estHeight = 300; // fallback estimate before first layout
+
+    let top = lineTop - GAP - estHeight;
+    let placeBelow = false;
+    if (top < 0) {
+      top = lineBottom + GAP;
+      placeBelow = true;
+    }
+
+    const left = taRect.left - containerRect.left + parseFloat(
+      window.getComputedStyle(ta).paddingLeft || '0'
+    );
+
+    setPopupStyle({ top, left });
+
+    // Keep selection visible relative to popup position
+    const selTopInTa = startPos.top;
+    const selBottomInTa = endPos.top + lineHeight;
+    const popupBottomIfAbove = selTopInTa - GAP - estHeight;
+    const popupTopIfBelow = selBottomInTa + GAP;
+
+    if (!placeBelow && popupBottomIfAbove < ta.scrollTop) {
+      ta.scrollTop = Math.max(0, selTopInTa - estHeight - GAP);
+    } else if (placeBelow) {
+      const needBottom = popupTopIfBelow + estHeight;
+      const viewBottom = ta.scrollTop + ta.clientHeight;
+      if (needBottom > viewBottom) {
+        ta.scrollTop += (needBottom - viewBottom);
+      }
+    }
+  }, [chatOpen]);
+
   return (
     <div className="flex flex-col h-full w-full px-6" tabIndex={-1}>
       <div className="flex items-center gap-2 py-4">
         <div className="flex-1" />
         <Saving />
-        <button
-          className={`cursor-pointer px-3 py-1 rounded text-sm ${vimMode ? 'bg-(--emphasis) text-white' : 'bg-(--darkelbg) text-(--foreground)'}`}
-          onClick={() => setVimMode(!vimMode)}
-          title="Alt+V"
-        >
-          {vimMode ? 'Vim On' : 'Vim Off'}
-        </button>
         <button
           className={`cursor-pointer px-3 py-1 rounded text-sm
                       ${preview
@@ -547,15 +495,34 @@ export default function JournalEditor() {
         </div>
       ) : (
         <div className="flex-1 w-full relative">
-          <CMEditor
+          {/* <VimEditor
             value={content}
             onChange={val => {
               dispatch(setContent(val));
               latestContentRef.current = val;
               scheduleSave();
             }}
-            editable={true}
-            vimEnabled={vimMode}
+            onKeyDown={handleVimEditorKeyDown}
+          /> */}
+          <textarea
+            className="w-full h-full min-h-[300px] px-3 py-2 rounded border-none focus:outline-none bg-transparent text-base font-mono resize-none"
+            placeholder="Write your entry..."
+            value={content}
+            onChange={e => {
+              dispatch(setContent(e.target.value));
+              // Update ref immediately so saveNow always gets latest
+              latestContentRef.current = e.target.value;
+              scheduleSave();
+            }}
+            spellCheck={true}
+            onKeyDown={handleTextareaKeyDown}
+            ref={taRef}
+          />
+          <InlineChatPopup
+            open={chatOpen}
+            onClose={handleCloseChat}
+            selectedText={chatSelectedText}
+            style={popupStyle}
           />
         </div>
       )}

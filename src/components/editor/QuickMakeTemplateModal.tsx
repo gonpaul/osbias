@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { emitUIEvent, onUIEvent } from '@/lib/uiEvents';
 import { FaTimes } from 'react-icons/fa';
 
 interface QuickMakeTemplateModalProps {
@@ -24,13 +25,11 @@ export default function QuickMakeTemplateModal({ isOpen, onClose }: QuickMakeTem
   useEffect(() => {
     if (isOpen) {
       // Request current entry details
-      const handler = (e: Event) => {
-        const ce = e as CustomEvent<CurrentEntry>;
-        setCurrentEntry(ce.detail);
-        window.removeEventListener('current-entry-response', handler);
-      };
-      window.addEventListener('current-entry-response', handler);
-      window.dispatchEvent(new CustomEvent('request-current-entry'));
+      const off = onUIEvent('current-entry-response', (detail) => {
+        setCurrentEntry(detail);
+        off();
+      });
+      emitUIEvent('request-current-entry');
     }
   }, [isOpen]);
 

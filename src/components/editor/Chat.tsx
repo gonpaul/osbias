@@ -233,7 +233,7 @@ const Chat: React.FC<ChatProps> = ({ className = '' }) => {
   };
 
   return (
-    <div className={`w-[300px] max-h-[90vh] overflow-hidden bg-(--background) flex flex-col ${className}`}>
+    <div className={`w-[300px] h-[90vh] overflow-hidden bg-(--background) flex flex-col ${className}`}>
       {/* Header with Tabs */}
       <div className="p-4 border-b border-(--secondary)/60">
         <div className="flex items-center justify-between mb-3">
@@ -348,7 +348,40 @@ const Chat: React.FC<ChatProps> = ({ className = '' }) => {
       )}
 
       {/* Messages Area */}
-      <div className="flex-1 mt-6 overflow-y-auto p-4 space-y-5">
+      <div className="min-h-[75vh] mt-6 overflow-y-auto p-4 space-y-5">
+        {messages.length === 0 && (
+          <div className="h-full flex items-start justify-center">
+            <div className="text-center max-w-[90%]">
+              <div className="mx-auto w-14 h-14 rounded-full bg-(--emphasis) flex items-center justify-center mb-3">
+                <FaRobot className="w-8 h-8 text-white" />
+              </div>
+              <div className="text-(--foreground) font-semibold text-lg mb-1">Welcome to Chat</div>
+              <div className="text-(--secondary) text-sm mb-4">
+                Ask a question or describe what you need help with.
+              </div>
+              <div className="flex flex-wrap gap-2 justify-center">
+                <button
+                  className="px-3 py-1.5 text-xs rounded-lg border border-(--secondary)/30 hover:border-(--golden)/50 text-(--foreground) transition-colors"
+                  // onClick={() => setMessage('Summarize my recent notes into 3 bullet points.')}
+                >
+                  Summarize notes
+                </button>
+                <button
+                  className="px-3 py-1.5 text-xs rounded-lg border border-(--secondary)/30 hover:border-(--golden)/50 text-(--foreground) transition-colors"
+                  // onClick={() => setMessage('Brainstorm 5 ideas to improve focus today.')}
+                >
+                  Brainstorm ideas
+                </button>
+                <button
+                  className="px-3 py-1.5 text-xs rounded-lg border border-(--secondary)/30 hover:border-(--golden)/50 text-(--foreground) transition-colors"
+                  // onClick={() => setMessage('Create a step-by-step plan to learn a new topic.')}
+                >
+                  Make a plan
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         {messages.map((msg) => (
           <div
             key={msg.id}
@@ -387,7 +420,7 @@ const Chat: React.FC<ChatProps> = ({ className = '' }) => {
       </div>
 
       {/* Input Area */}
-      <div className="p-4 border-t mt-6 border-(--secondary)/60">
+      <div className="p-4 border-t border-(--secondary)/60">
         <div className="flex">
           <textarea
             value={message}

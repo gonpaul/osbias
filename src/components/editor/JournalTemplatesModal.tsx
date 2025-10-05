@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { emitUIEvent } from '@/lib/uiEvents';
+import { FaSearch } from 'react-icons/fa';
 
 type TemplateEntry = {
   id: number;
@@ -57,44 +59,60 @@ export default function JournalTemplatesModal({
   }, [templates]);
 
   const handleInsertAtCursor = (tpl: TemplateEntry) => {
-    window.dispatchEvent(new CustomEvent('insert-text-at-cursor', { detail: { text: tpl.content } }));
+    emitUIEvent('insert-text-at-cursor', { text: tpl.content });
     onClose();
   };
 
   const handleReplaceContent = (tpl: TemplateEntry) => {
-    window.dispatchEvent(new CustomEvent('replace-current-content', { detail: { text: tpl.content } }));
+    emitUIEvent('replace-current-content', { text: tpl.content });
     onClose();
   };
+
+  // Close on Escape
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  }, [onClose]);
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-start justify-center">
-      <div className="bg-(--background) border border-(--secondary)/30 rounded-xl mt-20 w-full max-w-4xl mx-4">
-        <div className="flex items-center justify-between p-4 border-b border-(--secondary)/20">
-          <div className="text-lg font-semibold">Journal templates</div>
-          <button
-            onClick={onClose}
-            className="px-2 py-1 rounded hover:bg-(--dark) transition-colors duration-300 cursor-pointer"
-          >
-            Close
-          </button>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+      <div className="bg-(--darkelbg) rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
+        <div className="p-6 border-b border-(--secondary)/30">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold text-(--foreground)">Journal templates</h2>
+            </div>
+            <button
+              onClick={onClose}
+              className="text-(--secondary) hover:text-(--foreground) text-2xl transition-colors duration-300 cursor-pointer"
+            >
+              ×
+            </button>
+          </div>
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-[1fr_240px] gap-3">
+            <div className="relative">
+              <FaSearch className="absolute left-5 top-1/2 transform -translate-y-1/2 text-(--secondary)" />
+              <input
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Search templates..."
+                className="w-full pl-16 pr-4 py-3 bg-(--background) border border-(--secondary)/30 rounded-lg text-(--foreground) placeholder-(--secondary) focus:outline-none focus:border-(--golden)"
+              />
+            </div>
+            <input
+              value={tag}
+              onChange={e => setTag(e.target.value)}
+              placeholder="Tag filter"
+              className="px-4 py-3 bg-(--background) border border-(--secondary)/30 rounded-lg text-(--foreground) placeholder-(--secondary) focus:outline-none focus:border-(--golden)"
+            />
+          </div>
         </div>
-        <div className="p-4 flex gap-3">
-          <input
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Search..."
-            className="flex-1 px-3 py-2 bg-(--darkelbg) border border-(--secondary)/30 rounded focus:outline-none focus:border-(--emphasis)/50 transition-colors duration-300"
-          />
-          <input
-            value={tag}
-            onChange={e => setTag(e.target.value)}
-            placeholder="Tag filter"
-            className="w-60 px-3 py-2 bg-(--darkelbg) border border-(--secondary)/30 rounded focus:outline-none focus:border-(--emphasis)/50 transition-colors duration-300"
-          />
-        </div>
-        <div className="p-4">
+        <div className="p-6 overflow-y-auto max-h-[70vh]">
           {loading ? (
             <div className="text-(--secondary)">Loading…</div>
           ) : error ? (
@@ -102,23 +120,23 @@ export default function JournalTemplatesModal({
           ) : templates.length === 0 ? (
             <div className="text-(--secondary)">No templates found.</div>
           ) : (
-            <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <ul className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {templates.map(tpl => (
-                <li key={tpl.id} className="rounded-lg border border-(--secondary)/30 bg-(--darkelbg) p-4 flex flex-col gap-3">
-                  <div className="font-semibold">{tpl.title || 'Untitled template'}</div>
-                  <div className="text-(--secondary) text-sm line-clamp-3 whitespace-pre-wrap break-words">{tpl.content}</div>
+                <li key={tpl.id} className="bg-(--background) rounded-lg border border-(--secondary)/30 hover:border-(--golden)/50 transition-all duration-300 hover:shadow-lg hover:shadow-(--golden)/10 p-6 flex flex-col gap-3">
+                  <div className="font-semibold text-(--foreground)">{tpl.title || 'Untitled template'}</div>
+                  <div className="text-(--secondary) text-sm line-clamp-3 whitespace-pre-wrap break-words flex-1">{tpl.content}</div>
                   <div className="flex flex-wrap gap-2">
                     {(parsedTagsById.get(tpl.id) || []).map((tg, i) => (
-                      <span key={i} className="px-2 py-0.5 text-xs rounded bg-(--emphasis)/20 text-(--emphasis)">{tg}</span>
+                      <span key={i} className="px-2 py-1 text-xs bg-(--emphasis)/20 text-(--emphasis-light) rounded-full">{tg}</span>
                     ))}
                   </div>
                   <div className="flex gap-2 mt-2">
                     <button
-                      className="px-3 py-2 rounded border border-(--secondary)/30 hover:bg-(--dark) transition-colors duration-300 cursor-pointer"
+                      className="px-4 py-2 rounded-lg border border-(--secondary)/30 hover:border-(--golden)/50 text-(--foreground) transition-colors duration-300 cursor-pointer"
                       onClick={() => handleInsertAtCursor(tpl)}
                     >Insert at cursor</button>
                     <button
-                      className="px-3 py-2 rounded bg-(--emphasis) text-white hover:bg-(--emphasis)/80 transition-colors duration-300 cursor-pointer"
+                      className="px-4 py-2 rounded-lg bg-(--emphasis) text-white hover:bg-(--emphasis)/80 transition-colors duration-300 cursor-pointer"
                       onClick={() => handleReplaceContent(tpl)}
                     >Replace content</button>
                   </div>

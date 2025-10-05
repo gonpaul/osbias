@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Sidebar from "@/components/Sidebar";
+import SidebarGate from "@/components/SidebarGate";
 import ReduxProvider from "@/lib/redux/ReduxProvider";
 import SessionBootstrap from "@/lib/redux/SessionBootstrap";
+import ShortcutsHelp from "@/components/ShortcutsHelp";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,7 +35,8 @@ export default function RootLayout({
       >
         <ReduxProvider>
           <SessionBootstrap />
-          <Sidebar />
+          <ShortcutsHelp />
+          <SidebarGate />
           <div className="flex-1 flex flex-col overflow-hidden">
             {/* <AdminHeader user={session.user} /> */}
             <main className="flex-1 overflow-x-hidden overflow-y-auto">

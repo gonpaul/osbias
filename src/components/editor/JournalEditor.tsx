@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useRef, useCallback } from 'react';
+import { emitUIEvent, onUIEvent } from '@/lib/uiEvents';
 import { createRoot, Root } from 'react-dom/client';
 import MarkdownPreview from './MarkdownPreview';
 import ValidationHistory from './ValidationHistory';
@@ -249,10 +250,9 @@ function CMEditor({
     const view = new EditorView({ state, parent: editorRef.current });
     viewRef.current = view;
 
-    // Add event listener for text insertion at cursor
-    const handleInsertText = (event: Event) => {
-      const customEvent = event as CustomEvent;
-      const { text } = customEvent.detail;
+    const offInsert = onUIEvent('insert-text-at-cursor', (detail) => {
+      const { text } = detail;
+      const view = viewRef.current;
       if (text && view) {
         const selection = view.state.selection.main;
         const docLength = view.state.doc.length;
@@ -263,26 +263,21 @@ function CMEditor({
         // 3. Otherwise, insert at cursor position
         let insertPos = selection.from;
         let replaceTo = selection.to;
-        
         if (insertPos === 0 && replaceTo === 0 && docLength > 0) {
-          // No cursor set or at beginning with content - insert at end
           insertPos = docLength;
           replaceTo = docLength;
         }
-        
         view.dispatch({
-          changes: {
-            from: insertPos,
-            to: replaceTo,
-            insert: text
-          },
+          changes: { from: insertPos, to: replaceTo, insert: text },
           selection: { anchor: insertPos + text.length }
         });
         view.focus();
       }
-    };
+    });
 
-    window.addEventListener('insert-text-at-cursor', handleInsertText);
+    // Simple chord detection for Ctrl+D then P/C within a short window
+    let dChordStage = 0; // 0 = none, 1 = got Ctrl+D
+    let dChordTimer: number | null = null;
 
     const onKeyDown = (ev: KeyboardEvent) => {
       if ((ev.ctrlKey || ev.metaKey) && (ev.key === 'k' || ev.key === 'K')) {
@@ -307,12 +302,73 @@ function CMEditor({
         }).range(line.from);
         view.dispatch({ effects: [clearPopups.of(null), addPopup.of(deco)] });
       }
+
+      // Ctrl+Shift+T → open template chooser
+      // if ((ev.ctrlKey || ev.metaKey) && ev.shiftKey && (ev.key === 'T')) {
+      //   ev.preventDefault();
+      //   emitUIEvent('open-template-chooser');
+      //   return;
+      // }
+
+      // Ctrl+/ → toggle shortcuts help
+      if ((ev.ctrlKey || ev.metaKey) && ev.key === '/') {
+        ev.preventDefault();
+        emitUIEvent('toggle-shortcuts-help');
+        return;
+      }
+
+      // Chord: Ctrl+D then P → paraphrase selection
+      // Chord: Ctrl+D then C → bias check
+      if (ev.ctrlKey || ev.metaKey) {
+        if (ev.key === 'd' || ev.key === 'D') {
+          ev.preventDefault();
+          dChordStage = 1;
+          if (dChordTimer) {
+            window.clearTimeout(dChordTimer);
+          }
+          dChordTimer = window.setTimeout(() => {
+            dChordStage = 0;
+            dChordTimer = null;
+          }, 800);
+          return;
+        }
+        if ((ev.key === 'p' || ev.key === 'P') && dChordStage === 1) {
+          ev.preventDefault();
+          dChordStage = 0;
+          if (dChordTimer) {
+            window.clearTimeout(dChordTimer);
+            dChordTimer = null;
+          }
+          emitUIEvent('paraphrase-request');
+          return;
+        }
+        if ((ev.key === 'c' || ev.key === 'C') && dChordStage === 1) {
+          ev.preventDefault();
+          dChordStage = 0;
+          if (dChordTimer) {
+            window.clearTimeout(dChordTimer);
+            dChordTimer = null;
+          }
+          emitUIEvent('bias-check-request');
+          return;
+        }
+        if ((ev.key === 'j' || ev.key === 'J') && dChordStage === 1) {
+          ev.preventDefault();
+          dChordStage = 0;
+          if (dChordTimer) {
+            window.clearTimeout(dChordTimer);
+            dChordTimer = null;
+          }
+          emitUIEvent('open-template-chooser');
+          return;
+        }
+      }
     };
     view.dom.addEventListener('keydown', onKeyDown, true);
 
     return () => {
       view.dom.removeEventListener('keydown', onKeyDown, true);
-      window.removeEventListener('insert-text-at-cursor', handleInsertText);
+      offInsert();
       view.destroy();
       viewRef.current = null;
     };
@@ -764,9 +820,7 @@ function CMEditor({
         this.onClose = onClose;
       }
       
-      eq(other: HelloWidget) {
-        return true; // Always show the same widget
-      }
+      eq() { return true; }
       
       toDOM() {
         const container = document.createElement('div');
@@ -816,7 +870,7 @@ function CMEditor({
                 <div 
                   className="cursor-pointer rounded-lg border border-(--secondary)/30 hover:border-(--golden)/50 bg-(--background) p-6 transition-all duration-300 hover:shadow-lg hover:scale-105"
                   onClick={() => {
-                    window.dispatchEvent(new CustomEvent('open-journal-templates'));
+                    emitUIEvent('open-journal-templates');
                     this.view.dispatch({ effects: [effectsRef.current!.clearPopups.of(null)] });
                     Promise.resolve().then(() => this.view.focus());
                   }}
@@ -834,7 +888,7 @@ function CMEditor({
                 <div 
                   className="cursor-pointer rounded-lg border border-(--secondary)/30 hover:border-(--golden)/50 bg-(--background) p-6 transition-all duration-300 hover:shadow-lg hover:scale-105"
                   onClick={() => {
-                    window.dispatchEvent(new CustomEvent('open-framework-templates'));
+                    emitUIEvent('open-framework-templates');
                     this.view.dispatch({ effects: [effectsRef.current!.clearPopups.of(null)] });
                     Promise.resolve().then(() => this.view.focus());
                   }}
@@ -1067,7 +1121,7 @@ function CMEditor({
           credentials: 'include',
           body: JSON.stringify({
             prompt: `Please paraphrase the following text while maintaining its original meaning and tone:\n\n"${text}"`,
-            system: 'You are a helpful writing assistant. Paraphrase the given text while preserving the original meaning, tone, and intent. Make it clear and well-written.',
+            system: 'You are a helpful writing assistant. Paraphrase the given text while preserving the original meaning, tone, and intent. Make it clear and well-written. Return only the paraphrased result',
             provider: userPrefs.provider,
             model: userPrefs.model,
             maxTokens: userPrefs.maxTokens,
@@ -1413,15 +1467,15 @@ Return as JSON with this structure:
       view.dispatch({ effects: [effectsRef.current!.clearPopups.of(null), effectsRef.current!.addPopup.of(helloDeco)] });
     };
     
-    window.addEventListener('bias-check-request', handleBiasCheckRequest);
-    window.addEventListener('paraphrase-request', handleParaphraseRequest);
-    window.addEventListener('idea-validation-request', handleIdeaValidationRequest);
-    window.addEventListener('hello-widget-request', handleHelloWidgetRequest);
+    const offBias = onUIEvent('bias-check-request', () => handleBiasCheckRequest());
+    const offPara = onUIEvent('paraphrase-request', () => handleParaphraseRequest());
+    const offIdea = onUIEvent('idea-validation-request', () => handleIdeaValidationRequest());
+    const offHello = onUIEvent('hello-widget-request', () => handleHelloWidgetRequest());
     return () => {
-      window.removeEventListener('bias-check-request', handleBiasCheckRequest);
-      window.removeEventListener('paraphrase-request', handleParaphraseRequest);
-      window.removeEventListener('idea-validation-request', handleIdeaValidationRequest);
-      window.removeEventListener('hello-widget-request', handleHelloWidgetRequest);
+      offBias();
+      offPara();
+      offIdea();
+      offHello();
     };
   }, []);
 
@@ -1610,7 +1664,7 @@ export default function JournalEditor() {
   // Track the latest title/content at the time of save
   const latestTitleRef = useRef(title);
   const latestContentRef = useRef(content);
-  const lastInsertEventRef = useRef<{ text: string; at: number } | null>(null);
+  // const lastInsertEventRef = useRef<{ text: string; at: number } | null>(null);
 
   // Vim mode state
   const [vimMode, setVimMode] = useState(false);
@@ -1627,36 +1681,36 @@ export default function JournalEditor() {
         title,
         content,
       };
-      window.dispatchEvent(new CustomEvent('current-entry-response', { detail: payload }));
+      emitUIEvent('current-entry-response', payload);
     };
-    window.addEventListener('request-current-entry', onRequestPublishInfo);
-    return () => window.removeEventListener('request-current-entry', onRequestPublishInfo);
-  }, [current?.id, title, content]);
+    const off = onUIEvent('request-current-entry', () => onRequestPublishInfo());
+    return () => off();
+  }, [current, title, content]);
 
   // Announce when a brand-new blank draft is opened so the UI can show template chooser
   useEffect(() => {
     const isBlankDraft = !!current && current.id === -1 && (title.trim().length === 0) && (content.trim().length === 0);
     if (isBlankDraft && !announcedBlankRef.current) {
-      window.dispatchEvent(new CustomEvent('blank-entry-opened'));
+      emitUIEvent('blank-entry-opened');
       // Also trigger the hello widget for new entries
-      window.dispatchEvent(new CustomEvent('hello-widget-request'));
+      emitUIEvent('hello-widget-request');
       announcedBlankRef.current = true;
     }
     if (!current || current.id !== -1) {
       announcedBlankRef.current = false;
     }
-  }, [current?.id, title, content]);
+  }, [current, title, content]);
 
   // Additional effect to trigger hello widget when a new draft is created
   useEffect(() => {
     if (current && current.id === -1 && !announcedBlankRef.current) {
       // Small delay to ensure the editor is ready
       const timer = setTimeout(() => {
-        window.dispatchEvent(new CustomEvent('hello-widget-request'));
+        emitUIEvent('hello-widget-request');
       }, 100);
       return () => clearTimeout(timer);
     }
-  }, [current?.id]);
+  }, [current]);
 
   // Framework insertion handler
   const handleFrameworkInsertion = useCallback((event: CustomEvent) => {
@@ -1670,9 +1724,7 @@ export default function JournalEditor() {
         ).join('')}`;
       
       // Dispatch event to CodeMirror editor to insert at cursor position
-      window.dispatchEvent(new CustomEvent('insert-text-at-cursor', { 
-        detail: { text: frameworkContent } 
-      }));
+      emitUIEvent('insert-text-at-cursor', { text: frameworkContent });
     }
   }, []);
 
@@ -1794,18 +1846,52 @@ export default function JournalEditor() {
       URL.revokeObjectURL(url);
     };
 
-    window.addEventListener('insert-framework', handleInsertFramework);
-    window.addEventListener('create-entry-with-framework', handleCreateEntryWithFramework);
-    window.addEventListener('open-entry-id', handleOpenEntryId);
-    window.addEventListener('download-current-entry', handleDownloadCurrentEntry);
-    window.addEventListener('replace-current-content', handleReplaceCurrentContent);
+    const offInsertFramework = onUIEvent('insert-framework', ({ framework }) => {
+      handleFrameworkInsertion({ detail: { framework } } as CustomEvent);
+    });
+    const offCreateEntry = onUIEvent('create-entry-with-framework', ({ frameworkId, content, title }) => {
+      createNewEntryWithFramework(frameworkId, content, title);
+    });
+    const offOpenEntry = onUIEvent('open-entry-id', ({ id }) => {
+      void (async () => {
+        try {
+          const res = await fetch(`/api/journal/${id}`, { credentials: 'include' });
+          if (res.ok) {
+            const entry = await res.json() as JournalEntry;
+            if (!entries.find(e => e.id === entry.id)) {
+              dispatch(setEntries([entry, ...entries]));
+            }
+            dispatch(setCurrent(entry));
+            dispatch(setTitle(entry.title || ''));
+            dispatch(setContent(entry.content || ''));
+            dispatch(setSaveState('idle'));
+            try {
+              const key = `starterShown:${entry.id}`;
+              const shown = localStorage.getItem(key);
+              const blank = ((entry.title || '').trim().length === 0 || (entry.title || '').trim().toLowerCase() === 'untitled')
+                            && (entry.content || '').trim().length === 0;
+              if (!shown && blank) {
+                emitUIEvent('blank-entry-opened');
+              }
+              if (!shown) localStorage.setItem(key, '1');
+            } catch {}
+          }
+        } catch {}
+      })();
+    });
+    const offDownload = onUIEvent('download-current-entry', () => handleDownloadCurrentEntry());
+    const offReplace = onUIEvent('replace-current-content', ({ text }) => {
+      dispatch(setContent(text));
+      latestContentRef.current = text;
+      scheduleSave();
+    });
     
     return () => {
-      window.removeEventListener('insert-framework', handleInsertFramework);
-      window.removeEventListener('create-entry-with-framework', handleCreateEntryWithFramework);
-      window.removeEventListener('open-entry-id', handleOpenEntryId);
-      window.removeEventListener('download-current-entry', handleDownloadCurrentEntry);
-      window.removeEventListener('replace-current-content', handleReplaceCurrentContent);
+      offInsertFramework();
+      offCreateEntry();
+      offOpenEntry();
+      offDownload();
+      offReplace();
     };
   }, [handleFrameworkInsertion, createNewEntryWithFramework, entries, dispatch, scheduleSave]);
 

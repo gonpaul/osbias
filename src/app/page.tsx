@@ -1,19 +1,21 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { emitUIEvent, onUIEvent } from '@/lib/uiEvents';
 import { useSearchParams } from 'next/navigation';
 import Image from "next/image";
 import FileSystem from "@/components/editor/FileSystem";
 import { CgTemplate } from 'react-icons/cg';
 import { GrValidate } from "react-icons/gr";
 import { FiDownload } from "react-icons/fi";
+import { FaRegKeyboard } from "react-icons/fa";
 import RightBar from "@/components/editor/RightBar";
 import JournalEditor from "@/components/editor/JournalEditor";
 import FrameworkTemplatePopup from "@/components/editor/FrameworkTemplatePopup";
 import PublishModal from "@/components/feed/PublishModal";
 import QuickMakeTemplateModal from "@/components/editor/QuickMakeTemplateModal";
 import JournalTemplatesModal from "@/components/editor/JournalTemplatesModal";
-import NewEntryChooserModal from "@/components/editor/NewEntryChooserModal";
+import NewTemplateChooserModal from "@/components/editor/NewTemplateChooserModal";
 
 
 export default function Home() {
@@ -24,19 +26,17 @@ export default function Home() {
   const [isChooserOpen, setIsChooserOpen] = useState(false);
   const [publishData, setPublishData] = useState<{ id: number | null; title: string; content: string }>({ id: null, title: '', content: '' });
   const searchParams = useSearchParams();
-  type CurrentEntryDetail = { id: number | null; title: string; content: string };
+  // type CurrentEntryDetail is now provided by uiEvents payload typing
 
   // Open modals in response to global events dispatched by the editor widget
   useEffect(() => {
-    const openJournalTemplates = () => setIsJournalTemplatesOpen(true);
-    const openFrameworkTemplates = () => setIsTemplatePopupOpen(true);
-
-    window.addEventListener('open-journal-templates', openJournalTemplates);
-    window.addEventListener('open-framework-templates', openFrameworkTemplates);
-
+    const off1 = onUIEvent('open-journal-templates', () => setIsJournalTemplatesOpen(true));
+    const off2 = onUIEvent('open-framework-templates', () => setIsTemplatePopupOpen(true));
+    const off3 = onUIEvent('open-template-chooser', () => setIsChooserOpen(true));
     return () => {
-      window.removeEventListener('open-journal-templates', openJournalTemplates);
-      window.removeEventListener('open-framework-templates', openFrameworkTemplates);
+      off1();
+      off2();
+      off3();
     };
   }, []);
 
@@ -47,7 +47,7 @@ export default function Home() {
 
   const handleDownload = () => {
     // Dispatch custom event to trigger download
-    window.dispatchEvent(new CustomEvent('download-current-entry'));
+    emitUIEvent('download-current-entry');
   };
 
   // Handle framework from URL parameters
@@ -76,7 +76,7 @@ export default function Home() {
           if (res.ok) {
             const created = await res.json();
             // Ask editor to open this entry specifically
-            window.dispatchEvent(new CustomEvent('open-entry-id', { detail: { id: created.id } }));
+            emitUIEvent('open-entry-id', { id: created.id });
           }
         } catch {
           // noop; editor will still load normally
@@ -128,9 +128,7 @@ export default function Home() {
     }
     
     // Dispatch event with framework data to JournalEditor
-    window.dispatchEvent(new CustomEvent('insert-framework', { 
-      detail: { framework } 
-    }));
+    emitUIEvent('insert-framework', { framework });
   };
 
   return (
@@ -164,7 +162,7 @@ export default function Home() {
               title="Validate"
               onClick={() => {
                 // Dispatch custom event to trigger idea validation
-                window.dispatchEvent(new CustomEvent('idea-validation-request'));
+                emitUIEvent('idea-validation-request');
               }}
             >
               <GrValidate className="h-full w-10"/>
@@ -174,7 +172,7 @@ export default function Home() {
               title="Bias Check"
               onClick={() => {
                 // Dispatch custom event to trigger bias checking
-                window.dispatchEvent(new CustomEvent('bias-check-request'));
+                emitUIEvent('bias-check-request');
               }}
             >
               Bias-check 
@@ -184,7 +182,7 @@ export default function Home() {
               title="Paraphrase"
               onClick={() => {
                 // This will be handled by the JournalEditor component
-                window.dispatchEvent(new CustomEvent('paraphrase-request'));
+                emitUIEvent('paraphrase-request');
               }}
             >
               Paraphrase
@@ -192,14 +190,12 @@ export default function Home() {
               <button 
                 className="cursor-pointer px-4 py-2 rounded bg-transparent hover:bg-(--dark) hover:opacity-80 transition-colors rounded-e-md"
                 onClick={() => {
-                  const handler = (e: Event) => {
-                    const ce = e as CustomEvent<CurrentEntryDetail>;
-                    setPublishData(ce.detail);
+                  const off = onUIEvent('current-entry-response', (detail) => {
+                    setPublishData(detail);
                     setIsPublishOpen(true);
-                    window.removeEventListener('current-entry-response', handler);
-                  };
-                  window.addEventListener('current-entry-response', handler);
-                  window.dispatchEvent(new CustomEvent('request-current-entry'));
+                    off();
+                  });
+                  emitUIEvent('request-current-entry');
                 }}
               >
                 Publish
@@ -224,6 +220,15 @@ export default function Home() {
         <RightBar />
       </main>
 
+
+      {/* Shortcuts Help Floating Button */}
+      <button
+        className="fixed bottom-4 right-8 z-40 p-3 rounded-full bg-(--darkelbg) border border-(--secondary)/30 text-(--foreground) shadow hover:border-(--golden)/50 hover:shadow-lg transition-colors duration-300 cursor-pointer"
+        title="Shortcuts (Ctrl+/)"
+        onClick={() => emitUIEvent('toggle-shortcuts-help')}
+      >
+        <FaRegKeyboard className="w-6 h-6" />
+      </button>
 
       {/* Framework Template Popup */}
       <FrameworkTemplatePopup
@@ -250,7 +255,7 @@ export default function Home() {
       />
 
       {/* Template Chooser */}
-      <NewEntryChooserModal
+      <NewTemplateChooserModal
         isOpen={isChooserOpen}
         onClose={() => setIsChooserOpen(false)}
         onChooseJournalTemplate={() => {

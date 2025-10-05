@@ -40,6 +40,14 @@ export default function FrameworkTemplatePopup({
   onClose, 
   onSelectFramework 
 }: FrameworkTemplatePopupProps) {
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  }, [isOpen, onClose]);
   const [frameworks, setFrameworks] = useState<Framework[]>([]);
   const [filteredFrameworks, setFilteredFrameworks] = useState<Framework[]>([]);
   const [loading, setLoading] = useState(false);
@@ -127,7 +135,7 @@ export default function FrameworkTemplatePopup({
               </div>
               <button
                 onClick={onClose}
-                className="text-(--secondary) hover:text-(--foreground) text-2xl"
+                className="text-(--secondary) hover:text-(--foreground) text-2xl transition-colors duration-300 cursor-pointer"
               >
                 <FaTimes />
               </button>
@@ -136,32 +144,32 @@ export default function FrameworkTemplatePopup({
             {/* Search */}
             <div className="mt-4">
               <div className="relative">
-                <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-(--secondary)" />
+                <FaSearch className="absolute left-5 top-1/2 transform -translate-y-1/2 text-(--secondary)" />
                 <input
                   type="text"
                   placeholder="Search frameworks..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-15 pr-4 py-3 bg-(--background) border border-(--secondary)/30 rounded-lg text-(--foreground) placeholder-(--secondary) focus:outline-none focus:border-(--golden)"
+                  className="w-full pl-16 pr-4 py-3 bg-(--background) border border-(--secondary)/30 rounded-lg text-(--foreground) placeholder-(--secondary) focus:outline-none focus:border-(--golden)"
                 />
               </div>
             </div>
           </div>
 
           {/* Content */}
-          <div className="p-6 overflow-y-auto max-h-[60vh]">
+          <div className="p-6 overflow-y-auto max-h-[70vh]">
             {loading ? (
               <div className="text-center py-8">
                 <div className="text-(--foreground) text-lg">Loading frameworks...</div>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredFrameworks.map((framework) => (
                   <div
                     key={framework.id}
-                    className="bg-(--background) rounded-lg border border-(--secondary)/30 hover:border-(--golden)/50 transition-all duration-300 hover:shadow-lg hover:shadow-(--golden)/10 group"
+                    className="bg-(--background) rounded-lg border border-(--secondary)/30 hover:border-(--golden)/50 transition-all duration-300 hover:shadow-lg hover:shadow-(--golden)/10 group h-120"
                   >
-                    <div className="p-4">
+                    <div className="p-6 flex flex-col h-full">
                       {/* Framework Header */}
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex-1">
@@ -177,7 +185,7 @@ export default function FrameworkTemplatePopup({
                       </div>
 
                       {/* Description */}
-                      <p className="text-(--secondary) text-sm mb-3 line-clamp-2">
+                      <p className="text-(--secondary) text-sm mb-3 line-clamp-2 flex-1">
                         {framework.description}
                       </p>
 
@@ -202,13 +210,13 @@ export default function FrameworkTemplatePopup({
                       <div className="flex gap-2">
                         <button
                           onClick={() => handleSelectFramework(framework)}
-                          className="flex-1 bg-(--emphasis) hover:bg-(--emphasis)/80 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                          className="flex-1 bg-(--emphasis) hover:bg-(--emphasis)/80 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-300 cursor-pointer flex items-center justify-center gap-2"
                         >
                           Use Template
                         </button>
                         <button
                           onClick={() => handleViewDetails(framework)}
-                          className="px-3 py-2 border border-(--secondary)/30 hover:border-(--golden)/50 text-(--foreground) rounded-lg text-sm transition-colors"
+                          className="px-4 py-2 border border-(--secondary)/30 hover:border-(--golden)/50 text-(--foreground) rounded-lg text-sm transition-colors duration-300 cursor-pointer"
                         >
                           <FaEye />
                         </button>
@@ -237,11 +245,11 @@ export default function FrameworkTemplatePopup({
 
       {/* Framework Details Modal */}
       {selectedFramework && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-60">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-(--darkelbg) rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               {/* Header */}
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center justify-between mb-6 relative">
                 <div className="flex-1">
                   <h2 className="text-2xl font-bold text-(--foreground) mb-2">
                     {selectedFramework.name}
@@ -254,7 +262,7 @@ export default function FrameworkTemplatePopup({
                 </div>
                 <button
                   onClick={() => setSelectedFramework(null)}
-                  className="text-(--secondary) hover:text-(--foreground) text-2xl ml-4"
+                  className="absolute top-2 right-4 text-(--secondary) hover:text-(--foreground) text-2xl ml-4 transition-colors duration-300 cursor-pointer"
                 >
                   ×
                 </button>
@@ -323,14 +331,14 @@ export default function FrameworkTemplatePopup({
               <div className="flex gap-4 pt-6 border-t border-(--secondary)/30">
                 <button
                   onClick={() => handleSelectFramework(selectedFramework)}
-                  className="flex-1 bg-(--emphasis) hover:bg-(--emphasis)/80 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                  className="flex-1 bg-(--emphasis) hover:bg-(--emphasis)/80 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-300 cursor-pointer flex items-center justify-center gap-2"
                 >
-                  <BiSolidPyramid />
+                  <FaEye />
                   Use This Framework
                 </button>
                 <button
                   onClick={() => setSelectedFramework(null)}
-                  className="px-6 py-3 border border-(--secondary)/30 hover:border-(--golden)/50 text-(--foreground) rounded-lg transition-colors"
+                  className="px-6 py-3 border border-(--secondary)/30 hover:border-(--golden)/50 text-(--foreground) rounded-lg transition-colors duration-300 cursor-pointer"
                 >
                   Close
                 </button>

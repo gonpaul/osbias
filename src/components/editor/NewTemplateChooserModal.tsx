@@ -1,20 +1,30 @@
 'use client';
 
+import React, { useEffect } from 'react';
 import { FaTimes } from 'react-icons/fa';
 
-interface NewEntryChooserModalProps {
+interface NewTemplateChooserModalProps {
   isOpen: boolean;
   onClose: () => void;
   onChooseJournalTemplate: () => void;
   onChooseFrameworkTemplate: () => void;
 }
 
-export default function NewEntryChooserModal({ 
+export default function NewTemplateChooserModal({ 
   isOpen, 
   onClose, 
   onChooseJournalTemplate, 
   onChooseFrameworkTemplate 
-}: NewEntryChooserModalProps) {
+}: NewTemplateChooserModalProps) {
+  // Close on Escape
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  }, [onClose]);
+
   if (!isOpen) return null;
 
   return (

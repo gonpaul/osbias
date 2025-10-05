@@ -50,7 +50,7 @@
 - [x] Add auto-save functionality for journal entries
 - [x] Create entry CRUD operations (Create, Read, Update, Delete) - API Complete
 - [ ] Add entry search and filtering
-- [ ] Implement entry templates system
+- [x] Implement entry templates system
 - [ ] Add entry categorization and tagging
 - [x] optional: make vim mode and implement it
 - [x] Download current entry (.md) from editor toolbar
@@ -103,9 +103,9 @@
 
 ## Phase 8: File System & Organization (Week 9-10)
 - [ ] Replace mock file system with real implementation
-- [ ] Add file upload and management
+- [x] Add file upload and management
 - [ ] Implement folder organization
-- [ ] Add file search and indexing
+- [x] Add file search and indexing
 - [ ] Create file-idea linking system
 - [ ] Add file versioning
  - [x] Journal import via Profile (.md/.txt)
@@ -211,6 +211,7 @@
 - [ ] Optimize bundle size and performance
 - [ ] Add accessibility features
 - [x] Implement proper TypeScript types throughout - Complete
+- [x] Centralize and type UI event bus (emit/listen helpers)
 - [ ] Add comprehensive logging system
 - [ ] Create admin dashboard for system management
 - [ ] Apply authorization checks across all endpoints (audit pass)
@@ -249,3 +250,27 @@
 - 🔄 **Changed**: Direct framework-to-idea relationships for better usability
 - 🔄 **Changed**: JSON concepts field for flexible framework tagging
 - 📝 **Note**: Phase 1 foundation is production-ready and battle-tested
+
+### Shortcuts, Modals, and UI Polishing (October 2025)
+- ✅ Framework template popup aligned with frameworks page styling
+  (`src/components/editor/FrameworkTemplatePopup.tsx`)
+- ✅ Journal templates modal restyled to match framework modal
+  (`src/components/editor/JournalTemplatesModal.tsx`)
+- ✅ Added editor-only keyboard shortcuts:
+  - Ctrl/Cmd+K: Open inline chat
+  - Ctrl/Cmd+D, then P: Paraphrase selection (Accept/Reject widget)
+  - Ctrl/Cmd+D, then C: Bias check (results widget)
+  - Ctrl/Cmd+D, then J: Open template chooser
+- ✅ Added shortcuts help overlay (toggle with Ctrl/Cmd+/) and updated
+  in-app cheatsheet content
+- ✅ Added `open-template-chooser` and `toggle-shortcuts-help` UI events; wired
+  listeners in `app/page.tsx` and editor
+- ✅ Scoped shortcuts to editor only; removed global listener
+- ✅ Added Esc-to-close behavior for popups:
+  - New Template Chooser (`NewTemplateChooserModal`)
+  - Journal Templates Modal (`JournalTemplatesModal`)
+  - Framework Template Popup (`FrameworkTemplatePopup`)
+  - Shortcuts Help (`ShortcutsHelp`)
+- ✅ Chat empty state added with quick-start suggestions; input anchored to
+  bottom
+- ✅ Sidebar hidden on auth routes using `SidebarGate`

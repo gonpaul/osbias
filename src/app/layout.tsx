@@ -30,7 +30,7 @@ export default function RootLayout({
 
       <body
         // className={`${geistSans.variable} ${geistMono.variable} antialiased grid grid-cols-[1fr_3fr_1fr]`}
-        className={`${geistSans.variable} ${geistMono.variable} antialiased flex`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased flex h-screen overflow-hidden`}
       >
         <ReduxProvider>
           <SessionBootstrap />

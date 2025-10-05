@@ -125,7 +125,7 @@ export async function POST(req: NextRequest) {
   return handleAuthz(async () => {
     const authUser = await requireAuth(req);
     const body = await req.json();
-    const { user_id, framework_id, title, content } = body;
+    const { user_id, framework_id, title, content, is_template = false, tags } = body;
 
     const ownerId = user_id ?? authUser.id;
     assertOwner(authUser, ownerId);
@@ -137,7 +137,9 @@ export async function POST(req: NextRequest) {
       user_id: ownerId,
       framework_id: framework_id || null,
       title,
-      content
+      content,
+      is_template,
+      tags: Array.isArray(tags) ? JSON.stringify(tags) : (tags ?? null)
     });
     
     return NextResponse.json(newEntry, { status: 201 });

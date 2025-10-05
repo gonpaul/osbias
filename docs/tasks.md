@@ -52,26 +52,32 @@
 - [ ] Add entry search and filtering
 - [ ] Implement entry templates system
 - [ ] Add entry categorization and tagging
-- [ ] optional: make vim mode and implement it
+- [x] optional: make vim mode and implement it
+- [x] Download current entry (.md) from editor toolbar
 
 ## Phase 4: AI Integration & Smart Features (Week 4-6)
-- [ ] Integrate AI service (OpenAI/Anthropic) for:
-  - [ ] Bias detection in entries
-  - [ ] Content paraphrasing and improvement
-  - [ ] Framework suggestions
-  - [ ] Idea generation and expansion
-  - [ ] Content validation and fact-checking
-- [ ] Implement real-time AI chat functionality
-- [ ] Add AI-powered content analysis
-- [ ] Create AI feedback system for writing quality
+- [x] Integrate AI service (OpenAI/Anthropic) for:
+  - [x] inline prompts
+  - [x] add model choice in the inline popup and in profile management
+  - [x] Content paraphrasing and improvement
+  - [x] Bias detection in entries
+  - [x] Idea validation
+  <!-- - [ ] Idea generation and expansion
+  <!-- - [ ] Content validation and fact-checking --> -->
+- [x] framework insertion from the popup
+<!-- - [ ] Framework suggestions -->
+- [x] Implement real-time AI chat functionality
+<!-- - [ ] Add AI-powered content analysis -->
+<!-- - [ ] Create AI feedback system for writing quality -->
 
 ## Phase 5: Frameworks System (Week 6-7)
-- [ ] Create frameworks library page
-- [ ] Implement framework suggestion engine
+- [x] Create frameworks library page
+- [x] Create frameworks popup as a feature
+<!-- - [ ] Implement framework suggestion engine
 - [ ] Add framework application tracking
 - [ ] Create framework effectiveness metrics
-- [ ] Build framework recommendation system
-- [ ] Add custom framework creation
+- [ ] Build framework recommendation system -->
+- [x] Add custom framework creation
 
 ## Phase 6: Belief System & Goal Tracking (Week 7-8)
 - [ ] Build belief system page with:
@@ -102,6 +108,7 @@
 - [ ] Add file search and indexing
 - [ ] Create file-idea linking system
 - [ ] Add file versioning
+ - [x] Journal import via Profile (.md/.txt)
 
 ## Phase 9: WatchDog & Monitoring (Week 10-11)
 - [ ] Implement real idea tracking system
@@ -112,12 +119,39 @@
 - [ ] Add idea sharing and collaboration
 
 ## Phase 10: Publishing & Sharing (Week 11-12)
-- [ ] Create publishing system for entries
-- [ ] Add sharing functionality
-- [ ] Implement privacy controls
-- [ ] Create public/private entry modes
+- [x] Create publishing system for entries
+- [x] Add sharing functionality (copy link, open post page)
+- [x] Implement privacy controls (visibility: public/unlisted/private)
+- [x] Create public/private entry modes
 - [ ] Add export options (PDF, Markdown, etc.)
+  - [x] Export all entries as concatenated Markdown (.md)
+  - [x] Export all entries as concatenated text (.txt)
+  - [x] Export ZIP of individual entry files (.md/.txt)
+  - [ ] Export to PDF
+  - [ ] Export to docx
 - [ ] Implement entry templates for publishing
+
+### Public Feed Feature (Completed)
+- [x] Data model: `posts` table with FKs, visibility, slug, indexes
+- [x] Helpers: slug generation with collision handling; excerpt utility
+- [x] Rate limit: lightweight per-user/IP on publish
+- [x] APIs:
+  - [x] POST `/api/posts/publish` (owner-only snapshot from journal entry)
+  - [x] GET `/api/posts` (public feed, pagination, optional author filter)
+  - [x] GET `/api/posts/[slug]` (public post detail)
+  - [x] GET `/api/posts/mine` (author dashboard list)
+- [x] SSR pages:
+  - [x] `app/feed/page.tsx` (paginated feed)
+  - [x] `app/p/[slug]/page.tsx` (post detail + metadata)
+- [x] Editor integration:
+  - [x] Publish modal from toolbar (title, visibility, preview excerpt)
+  - [x] On success: view/copy link
+- [x] UI components:
+  - [x] `components/feed/PostCard.tsx`
+  - [x] `components/feed/PublishModal.tsx`
+- [x] SEO: `generateMetadata` for post pages (title/description/OG)
+- [x] add ranking and a simple algorithm that shows top ranked and most recent first
+- [ ] Sitemap/ISR for public posts (optional)
 
 ## Phase 11: Advanced Features (Week 12-14)
 - [ ] Add collaborative features
@@ -193,6 +227,17 @@
 ---
 
 ## Changelog
+
+### AI Model Choice Implementation (January 2025)
+- ✅ **Completed**: Chat model choice logic with provider and model selection
+- ✅ **Completed**: User preferences system for AI settings (provider, model, max tokens)
+- ✅ **Completed**: Profile page UI for AI preferences management
+- ✅ **Completed**: Inline chat popup with model selection and max tokens control
+- ✅ **Completed**: Support for OpenAI (4 models) and Claude (5 models) providers
+- ✅ **Completed**: Max tokens preference with profile and session-level control
+- 🔄 **Enhanced**: AI service architecture with model selection support
+- 🔄 **Enhanced**: User preferences schema to include AI settings
+- 📝 **Note**: Complete AI model choice system with persistent preferences and session overrides
 
 ### Phase 1 Completion (January 2025)
 - ✅ **Completed**: Full database schema with simplified architecture

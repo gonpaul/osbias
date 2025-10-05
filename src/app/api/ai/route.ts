@@ -23,6 +23,9 @@ import { getAI, type ProviderName } from '@/lib/services/ai';
  *                 enum: [openai, claude]
  *                 default: openai
  *                 description: The AI provider to use.
+ *               model:
+ *                 type: string
+ *                 description: Optional model identifier to use for the completion.
  *               prompt:
  *                 type: string
  *                 description: The user prompt for the AI.
@@ -67,14 +70,14 @@ import { getAI, type ProviderName } from '@/lib/services/ai';
 
 export async function POST(req: Request) {
   try {
-    const { provider = 'openai', prompt, system, maxTokens } = await req.json();
+    const { provider = 'openai', model, prompt, system, maxTokens } = await req.json();
     if (!prompt || typeof prompt !== 'string') {
       return NextResponse.json({ error: 'Missing prompt' }, { status: 400 });
     }
     const ai = getAI((provider as ProviderName) ?? 'openai');
-    const text = await ai.complete({ prompt, system, maxTokens });
+    const text = await ai.complete({ prompt, system, maxTokens, model });
     return NextResponse.json({ text });
-  } catch (err: any) {
-    return NextResponse.json({ error: err?.message ?? 'Server error' }, { status: 500 });
+  } catch (err: unknown) {
+    return NextResponse.json({ error: err instanceof Error ? err.message : 'Server error' }, { status: 500 });
   }
 }

@@ -1,5 +1,5 @@
 // db/migrations/20250123000000_simplify_frameworks.js
-export async function up(knex) {
+module.exports.up = async function up(knex) {
   // Ensure FK enforcement in SQLite
   await knex.raw('PRAGMA foreign_keys = ON');
 
@@ -65,7 +65,7 @@ export async function up(knex) {
   `);
 }
 
-export async function down(knex) {
+module.exports.down = async function down(knex) {
   // Recreate mental_models table
   await knex.schema.createTable('mental_models', (t) => {
     t.increments('id').primary();

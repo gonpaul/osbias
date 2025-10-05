@@ -1,4 +1,4 @@
-export async function up(knex) {
+module.exports.up = async function(knex) {
   // Ensure FK enforcement in SQLite
   await knex.raw('PRAGMA foreign_keys = ON');
 
@@ -269,7 +269,7 @@ export async function up(knex) {
   });
 }
 
-export async function down(knex) {
+module.exports.down = async function down(knex) {
   await knex.schema.dropTableIfExists('actions');
   await knex.schema.dropTableIfExists('goals');
   await knex.schema.dropTableIfExists('beliefs');

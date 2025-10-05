@@ -1,5 +1,5 @@
 // knexfile.js
-export default {
+module.exports = {
   development: {
     client: "better-sqlite3",
     connection: {

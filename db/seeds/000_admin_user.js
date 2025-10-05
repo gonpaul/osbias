@@ -1,9 +1,9 @@
-import bcrypt from "bcryptjs";
+const bcrypt = require("bcryptjs");
 /**
  * @param { import("knex").Knex } knex
  * @returns { Promise<void> } 
  */
-export async function seed(knex) {
+exports.seed = async function(knex) {
   const email = 'admin@osbias.local';
   const exists = await knex('users').where({ email }).first();
   if (exists) return;
@@ -18,4 +18,4 @@ export async function seed(knex) {
     created_at: knex.fn.now(),
     updated_at: knex.fn.now(),
   });
-}
+};

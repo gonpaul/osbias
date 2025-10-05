@@ -1,4 +1,4 @@
-export async function seed(knex) {
+exports.seed = async function(knex) {
   // Clear existing data
   await knex("similar_frameworks").del();
   await knex("framework_steps").del();

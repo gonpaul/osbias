@@ -6,6 +6,8 @@ export interface JournalEntry extends WithID, Timestamps {
   framework_id: ID | null;
   title: string;
   content: string;
+  is_template: boolean;
+  tags: string | null; // JSON array of strings
 }
 
 export type NewJournalEntry = Insertable<JournalEntry>;

@@ -109,11 +109,19 @@ export async function PUT(
     }
     assertOwner(authUser, existing.user_id as number);
     const body = await req.json();
-    const { framework_id, title, content } = body;
-    const updates: any = {};
+    const { framework_id, title, content, is_template, tags } = body as {
+      framework_id?: number | null;
+      title?: string;
+      content?: string;
+      is_template?: boolean;
+      tags?: string[] | string | null;
+    };
+    const updates: Record<string, unknown> = {};
     if (framework_id !== undefined) updates.framework_id = framework_id;
     if (title) updates.title = title;
     if (content) updates.content = content;
+    if (typeof is_template === 'boolean') updates.is_template = is_template;
+    if (tags !== undefined) updates.tags = Array.isArray(tags) ? JSON.stringify(tags) : (tags ?? null);
     const updatedEntry = await updateJournalEntry(entryId, updates);
     return NextResponse.json(updatedEntry);
   });

@@ -11,16 +11,16 @@ interface RightBarProps {
 }
 
 const RightBar: React.FC<RightBarProps> = ({ className = '' }) => {
-  const [activeButton, setActiveButton] = useState<string>('WatchDog');
+  const [activeButton, setActiveButton] = useState<string>('Chat');
 
   const options = [
-    {
-      id: 'WatchDog',
-      label: 'WatchDog',
-      icon: FaEye,
-      description: 'Monitor and track ideas',
-      component: WatchDog,
-    },
+    // {
+    //   id: 'WatchDog',
+    //   label: 'WatchDog',
+    //   icon: FaEye,
+    //   description: 'Monitor and track ideas',
+    //   component: WatchDog,
+    // },
     {
       id: 'Chat',
       label: 'Chat',
@@ -28,13 +28,13 @@ const RightBar: React.FC<RightBarProps> = ({ className = '' }) => {
       description: 'Interactive conversations',
       component: Chat,
     },
-    {
-      id: 'Models',
-      label: 'Models',
-      icon: FaCubes,
-      description: 'Data models and schemas',
-      component: ModelsSuggestion,
-    }
+    // {
+    //   id: 'Models',
+    //   label: 'Models',
+    //   icon: FaCubes,
+    //   description: 'Data models and schemas',
+    //   component: ModelsSuggestion,
+    // }
   ];
 
   const handleButtonClick = (buttonId: string) => {
@@ -44,8 +44,8 @@ const RightBar: React.FC<RightBarProps> = ({ className = '' }) => {
   };
 
   return (
-    <div className={`flex flex-col mt-10 w-full mx-auto items-center bg-(--background) ${className}`}>
-      <div className="flex flex-row justify-center w-full">
+    <div className={`flex flex-col mt-10 w-full mx-auto items-center bg-(--background) sticky top-10 self-start ${className}`}>
+      {/* <div className="flex flex-row justify-center w-full">
         {options.map((button, idx) => {
           const IconComponent = button.icon;
           const isActive = activeButton === button.id;
@@ -81,9 +81,9 @@ const RightBar: React.FC<RightBarProps> = ({ className = '' }) => {
             </button>
           );
         })}
-      </div>
+      </div> */}
 
-      <div className="flex-1 mt-4">
+      <div className="flex-1">
         {(() => {
           const activeOption = options.find((opt) => opt.id === activeButton);
           const Component = activeOption?.component;

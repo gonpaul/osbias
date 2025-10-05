@@ -1,53 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireAuth, assertOwner, handleAuthz } from "@/lib/authz";
 import { 
-  getFrameworkSteps,
-  createFrameworkStep,
-  getFrameworkById
-} from "../../../../../models/knowledge";
-import { requireAuth, assertOwner, requireRole, handleAuthz } from "@/lib/authz";
-
-/**
- * @swagger
- * components:
- *   schemas:
- *     FrameworkStep:
- *       type: object
- *       required:
- *         - id
- *         - framework_id
- *         - step_order
- *         - title
- *       properties:
- *         id:
- *           type: integer
- *           description: Step ID
- *         framework_id:
- *           type: integer
- *           description: Framework ID
- *         step_order:
- *           type: integer
- *           description: Order of the step (starts from 1)
- *         title:
- *           type: string
- *           description: Step title
- *         description:
- *           type: string
- *           nullable: true
- *           description: Step description
- *         created_at:
- *           type: string
- *           format: date-time
- *         updated_at:
- *           type: string
- *           format: date-time
- */
+  getFrameworkSteps, 
+  createFrameworkStep, 
+  getFrameworkById 
+} from "@/models/knowledge";
 
 /**
  * @swagger
  * /frameworks/{id}/steps:
  *   get:
- *     summary: Get all steps for a framework
- *     tags: [Framework Steps]
+ *     summary: Get steps for a specific framework
+ *     tags: [Frameworks]
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -65,23 +29,41 @@ import { requireAuth, assertOwner, requireRole, handleAuthz } from "@/lib/authz"
  *             schema:
  *               type: array
  *               items:
- *                 $ref: '#/components/schemas/FrameworkStep'
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                   framework_id:
+ *                     type: integer
+ *                   step_order:
+ *                     type: integer
+ *                   title:
+ *                     type: string
+ *                   description:
+ *                     type: string
+ *                   created_at:
+ *                     type: string
+ *                     format: date-time
+ *       404:
+ *         description: Framework not found
+ *       401:
+ *         description: Unauthorized
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   return handleAuthz(async () => {
-    const authUser = await requireAuth(req);
-    const { id } = await params;
-    const frameworkId = parseInt(id);
-    const framework = await getFrameworkById(frameworkId);
-    if (!framework) {
-      return NextResponse.json({ error: "Framework not found" }, { status: 404 });
+    await requireAuth(req);
+    const frameworkId = parseInt(params.id);
+    
+    if (isNaN(frameworkId)) {
+      return NextResponse.json(
+        { error: "Invalid framework ID" },
+        { status: 400 }
+      );
     }
-    if (!framework.is_system) {
-      assertOwner(authUser, framework.user_id as number);
-    }
+
     const steps = await getFrameworkSteps(frameworkId);
     return NextResponse.json(steps);
   });
@@ -92,7 +74,7 @@ export async function GET(
  * /frameworks/{id}/steps:
  *   post:
  *     summary: Create a new step for a framework
- *     tags: [Framework Steps]
+ *     tags: [Frameworks]
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -120,44 +102,102 @@ export async function GET(
  *                 minLength: 1
  *               description:
  *                 type: string
+ *                 nullable: true
  *     responses:
  *       201:
- *         description: Step created successfully
+ *         description: Framework step created successfully
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/FrameworkStep'
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                 framework_id:
+ *                   type: integer
+ *                 step_order:
+ *                   type: integer
+ *                 title:
+ *                   type: string
+ *                 description:
+ *                   type: string
+ *                 created_at:
+ *                   type: string
+ *                   format: date-time
  *       400:
  *         description: Bad request - missing required fields
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - not owner of framework
+ *       404:
+ *         description: Framework not found
  */
 export async function POST(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   return handleAuthz(async () => {
     const authUser = await requireAuth(req);
-    const { id } = await params;
-    const frameworkId = parseInt(id);
+    const frameworkId = parseInt(params.id);
+    
+    if (isNaN(frameworkId)) {
+      return NextResponse.json(
+        { error: "Invalid framework ID" },
+        { status: 400 }
+      );
+    }
+
+    // Check if framework exists and user has permission
     const framework = await getFrameworkById(frameworkId);
     if (!framework) {
-      return NextResponse.json({ error: "Framework not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Framework not found" },
+        { status: 404 }
+      );
     }
-    if (framework.is_system) {
-      requireRole(authUser, "admin");
-    } else {
-      assertOwner(authUser, framework.user_id as number);
+
+    // Only allow editing if user owns the framework, it's a system framework, or user is admin
+    if (!framework.is_system && framework.user_id !== authUser.id && authUser.role !== "admin") {
+      return NextResponse.json(
+        { error: "Forbidden - not owner of framework" },
+        { status: 403 }
+      );
     }
+
     const body = await req.json();
     const { step_order, title, description } = body;
+
     if (!step_order || !title) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Missing required fields: step_order and title" },
+        { status: 400 }
+      );
     }
-    const newStep = await createFrameworkStep({
-      framework_id: frameworkId,
-      step_order,
-      title,
-      description: description || null
-    });
-    return NextResponse.json(newStep, { status: 201 });
+
+    if (step_order < 1) {
+      return NextResponse.json(
+        { error: "step_order must be >= 1" },
+        { status: 400 }
+      );
+    }
+
+    try {
+      const newStep = await createFrameworkStep({
+        framework_id: frameworkId,
+        step_order,
+        title,
+        description: description || null,
+      });
+
+      return NextResponse.json(newStep, { status: 201 });
+    } catch (err: any) {
+      const msg = String(err?.message || "");
+      const code = String((err && (err as any).code) || "");
+      if (code.includes("SQLITE_CONSTRAINT") || msg.toUpperCase().includes("UNIQUE") || msg.toUpperCase().includes("CONSTRAINT")) {
+        return NextResponse.json({ error: "Step order already exists for this framework" }, { status: 409 });
+      }
+      throw err;
+    }
   });
 }

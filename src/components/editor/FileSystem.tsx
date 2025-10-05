@@ -152,6 +152,10 @@ const FileSystem: React.FC<FileSystemProps> = ({
       content: ''
     };
     dispatch(setCurrent(draft));
+    // Signal the UI that a blank draft has been opened so starter overlay can appear
+    try {
+      window.dispatchEvent(new CustomEvent('blank-entry-opened'));
+    } catch {}
   }, [dispatch]);
 
   // Delete the current entry (if any)

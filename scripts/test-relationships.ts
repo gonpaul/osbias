@@ -8,7 +8,7 @@ import { NewBelief, NewGoal, NewAction } from "../src/models/life";
 async function testRelationships() {
   console.log("🧪 Testing database relationships...\n");
 
-  let testData: {
+  const testData: {
     userId: number | null;
     frameworkId: number | null;
     entryId: number | null;
@@ -79,7 +79,9 @@ async function testRelationships() {
       user_id: userId,
       framework_id: frameworkId,
       title: "Testing First Principles",
-      content: "This is a test entry using the First Principles framework."
+      content: "This is a test entry using the First Principles framework.",
+      is_template: false,
+      tags: null
     };
     const [entryId] = await db("journal_entries").insert(journalEntry);
     testData.entryId = entryId;

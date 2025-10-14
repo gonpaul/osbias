@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getBeliefById, updateBelief, deleteBelief } from "../../../../models/life";
+import type { UpdateBelief } from "../../../../models/life";
 import { requireAuth, assertOwner, handleAuthz } from "@/lib/authz";
 
 /**
@@ -89,7 +90,7 @@ export async function PUT(
   return handleAuthz(async () => {
     const authUser = await requireAuth(req);
     const { id } = await params;
-    const body = await req.json();
+    const body: Partial<{ belief: string; confidence_level: number; evidence: string | null }> = await req.json();
     const { belief, confidence_level, evidence } = body;
 
     const existing = await getBeliefById(parseInt(id));
@@ -98,7 +99,7 @@ export async function PUT(
     }
     assertOwner(authUser, existing.user_id as number);
 
-    const updates: any = {};
+    const updates: Partial<UpdateBelief> = {};
     if (belief) updates.belief = belief;
     if (confidence_level !== undefined) updates.confidence_level = confidence_level;
     if (evidence !== undefined) updates.evidence = evidence;

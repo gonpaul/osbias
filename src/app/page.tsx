@@ -1,8 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { emitUIEvent, onUIEvent } from '@/lib/uiEvents';
-import { useSearchParams } from 'next/navigation';
 import Image from "next/image";
 import FileSystem from "@/components/editor/FileSystem";
 import { CgTemplate } from 'react-icons/cg';
@@ -25,25 +24,36 @@ export default function Home() {
   const [isJournalTemplatesOpen, setIsJournalTemplatesOpen] = useState(false);
   const [isChooserOpen, setIsChooserOpen] = useState(false);
   const [publishData, setPublishData] = useState<{ id: number | null; title: string; content: string }>({ id: null, title: '', content: '' });
-  const searchParams = useSearchParams();
+  const [allowPosting, setAllowPosting] = useState<boolean | null>(null);
+  // read search params via window to avoid suspense requirement
   // type CurrentEntryDetail is now provided by uiEvents payload typing
 
   // Open modals in response to global events dispatched by the editor widget
   useEffect(() => {
-    const off1 = onUIEvent('open-journal-templates', () => setIsJournalTemplatesOpen(true));
+    const off1 = onUIEvent('open-journal-templates', () => { setIsJournalTemplatesOpen(true); });
     const off2 = onUIEvent('open-framework-templates', () => setIsTemplatePopupOpen(true));
     const off3 = onUIEvent('open-template-chooser', () => setIsChooserOpen(true));
-    return () => {
-      off1();
-      off2();
-      off3();
-    };
+    return () => { off1(); off2(); off3(); };
   }, []);
 
   const handleTemplateClick = () => {
     // Open chooser first to select between journal template / framework / continue
     setIsChooserOpen(true);
   };
+
+  // Fetch permission to control publishing
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch('/api/auth/me', { credentials: 'include' });
+        if (!res.ok) { setAllowPosting(null); return; }
+        const me = await res.json();
+        setAllowPosting(Boolean(me.allow_posting));
+      } catch {
+        setAllowPosting(null);
+      }
+    })();
+  }, []);
 
   const handleDownload = () => {
     // Dispatch custom event to trigger download
@@ -52,8 +62,9 @@ export default function Home() {
 
   // Handle framework from URL parameters
   useEffect(() => {
-    const frameworkId = searchParams.get('framework');
-    const content = searchParams.get('content');
+    const url = new URL(window.location.href);
+    const frameworkId = url.searchParams.get('framework');
+    const content = url.searchParams.get('content');
     
     if (frameworkId && content) {
       (async () => {
@@ -82,14 +93,14 @@ export default function Home() {
           // noop; editor will still load normally
         } finally {
           // Clean up URL parameters regardless
-          const url = new URL(window.location.href);
-          url.searchParams.delete('framework');
-          url.searchParams.delete('content');
-          window.history.replaceState({}, '', url.toString());
+          const cleanUrl = new URL(window.location.href);
+          cleanUrl.searchParams.delete('framework');
+          cleanUrl.searchParams.delete('content');
+          window.history.replaceState({}, '', cleanUrl.toString());
         }
       })();
     }
-  }, [searchParams]);
+  }, []);
 
   // When a brand-new entry is created (id === -1), prompt for template chooser automatically
 
@@ -132,24 +143,25 @@ export default function Home() {
   };
 
   return (
-    // <div className="font-sans grid grid-rows-[1fr_20px] items-center justify-items-center min-h-screen me-8 py-10">
+    <Suspense fallback={<div />}> 
+    {/* <div className="font-sans grid grid-rows-[1fr_20px] items-center justify-items-center min-h-screen me-8 py-10"> */}
     <div className="font-sans max-h-screen overflow-y-auto pt-10">
       <main
         className="grid grid-cols-[280px_1fr_340px] h-full w-full rounded-t-2xl items-start"
       >
         <FileSystem width="mx-auto w-120"></FileSystem>
-        <div className="flex flex-col bg-(--darkelbg) h-full rounded-t-2xl w-full">
-          <div className="flex flex-row items-center-safe my-10 w-full">
+        <div id="editor-div" className="flex flex-col bg-(--darkelbg) h-full rounded-t-2xl w-full">
+          <div className="flex flex-row items-center-safe my-10 p-4 w-full sticky top-0 z-20 bg-(--darkelbg) bg-opacity-90 backdrop-blur-sm">
             <div className="flex-1 ps-24 flex items-center">
               <button
-                className="cursor-pointer me-4 px-3 py-2 rounded bg-transparent hover:bg-(--dark) hover:opacity-80 transition-colors duration-300"
+                className="cursor-pointer me-4 px-6 py-2 rounded-2xl bg-(--secondary)/20 hover:bg-(--dark) hover:opacity-80 transition-colors duration-300"
                 title="Make a template"
                 onClick={() => setIsQuickMakeTemplateOpen(true)}
               >
                 Make a template
               </button>
             </div>
-            <ul className="flex flex-row rounded-md border-1 border-(--secondary) flex-shrink-0 divide-x divide-(--secondary)">
+            <ul className="flex flex-row rounded-xl bg-(--secondary)/20 overflow-hidden border-1 border-(--secondary) flex-shrink-0 divide-x divide-(--secondary)">
             <button
               onClick={handleTemplateClick}
               className="cursor-pointer pe-4 py-2 rounded-s-md bg-transparent hover:bg-(--dark) hover:opacity-80 transition-colors first:pl-10"
@@ -187,9 +199,11 @@ export default function Home() {
             >
               Paraphrase
             </button>
-              <button 
-                className="cursor-pointer px-4 py-2 rounded bg-transparent hover:bg-(--dark) hover:opacity-80 transition-colors rounded-e-md"
-                onClick={() => {
+            <button 
+              className="cursor-pointer px-4 py-2 rounded bg-transparent hover:bg-(--dark) hover:opacity-80 transition-colors rounded-e-md disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={allowPosting === false}
+              title={allowPosting === false ? 'Posting not allowed' : undefined}
+              onClick={() => {
                   const off = onUIEvent('current-entry-response', (detail) => {
                     setPublishData(detail);
                     setIsPublishOpen(true);
@@ -203,7 +217,7 @@ export default function Home() {
             </ul>
             <div className="flex-1 flex justify-end pe-20">
               <button 
-                className="cursor-pointer ps-4 pe-4 py-2 rounded bg-transparent"
+                className="cursor-pointer p-4 bg-(--secondary)/20 hover:bg-(--dark) transition-colors duration-300 text-center rounded-full"
                 title="Download"
                 onClick={handleDownload}
               >
@@ -271,7 +285,7 @@ export default function Home() {
       {/* Journal Templates Modal */}
       <JournalTemplatesModal
         isOpen={isJournalTemplatesOpen}
-        onClose={() => setIsJournalTemplatesOpen(false)}
+        onClose={() => { setIsJournalTemplatesOpen(false); }}
       />
 
       <footer className="hidden gap-[24px] flex-wrap items-center justify-center">
@@ -322,5 +336,6 @@ export default function Home() {
         </a>
       </footer>
     </div>
+    </Suspense>
   );
 }

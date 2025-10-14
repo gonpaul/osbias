@@ -193,11 +193,16 @@ export async function getFrameworkUsageStats(frameworkId: ID): Promise<{
     .avg("rating as avg_rating")
     .first();
 
+  type UsageAggRow = { total_uses?: string | number; unique_users?: string | number; completion_rate?: string | number | null } | undefined;
+  type EffectAggRow = { avg_rating?: string | number | null } | undefined;
+  const u = usage as UsageAggRow;
+  const e = effectiveness as EffectAggRow;
+
   return {
-    total_uses: parseInt(usage?.total_uses as string) || 0,
-    unique_users: parseInt(usage?.unique_users as string) || 0,
-    completion_rate: parseFloat(usage?.completion_rate as string) || 0,
-    avg_rating: parseFloat(effectiveness?.avg_rating as string) || 0,
+    total_uses: u?.total_uses != null ? Number(u.total_uses) : 0,
+    unique_users: u?.unique_users != null ? Number(u.unique_users) : 0,
+    completion_rate: u?.completion_rate != null ? Number(u.completion_rate) : 0,
+    avg_rating: e?.avg_rating != null ? Number(e.avg_rating) : 0,
   };
 }
 

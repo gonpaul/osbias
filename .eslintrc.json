@@ -1,0 +1,19 @@
+{
+  "root": true,
+  "extends": [
+    "next/core-web-vitals"
+  ],
+  "parserOptions": {
+    "project": false
+  },
+  "rules": {
+    "@typescript-eslint/no-explicit-any": "off",
+    "prefer-const": ["warn"],
+    "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }],
+    "react-hooks/exhaustive-deps": ["warn"],
+    "@typescript-eslint/ban-ts-comment": ["warn", { "ts-expect-error": "allow-with-description" }]
+  }
+}
+
+
+

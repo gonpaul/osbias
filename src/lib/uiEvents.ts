@@ -49,7 +49,6 @@ type PayloadMap = {
 export function emitUIEvent<N extends UIEventName>(name: N, detail?: PayloadMap[N]) {
   if (typeof window === 'undefined') return;
   if (process.env.NODE_ENV !== 'production') {
-    // eslint-disable-next-line no-console
     console.debug('[UIEvent emit]', name, detail);
   }
   window.dispatchEvent(new CustomEvent(name, { detail } as CustomEventInit));

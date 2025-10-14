@@ -27,6 +27,10 @@ const currentJournalSlice = createSlice({
       state.content = action.payload?.content || '';
       state.saveState = 'idle';
     },
+    // Use during save completion; do NOT touch title/content buffer
+    setCurrentMeta(state, action: PayloadAction<JournalEntry | null>) {
+      state.current = action.payload;
+    },
     setTitle(state, action: PayloadAction<string>) {
       state.title = action.payload;
       state.saveState = 'idle';
@@ -53,6 +57,7 @@ const currentJournalSlice = createSlice({
 
 export const {
   setCurrent,
+  setCurrentMeta,
   setTitle,
   setContent,
   setSaveState,

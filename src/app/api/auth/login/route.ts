@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
   const ok = await verifyPassword(password, user.password_hash || "");
   if (!ok) return NextResponse.json({ error: "Invalid" }, { status: 401 });
 
-  const token = signToken({ id: user.id, email: user.email, role: user.role as any });
+  const token = signToken({ id: user.id, email: user.email, role: user.role });
   const res = NextResponse.json(
     { id: user.id, name: user.name, email: user.email, role: user.role },
     { status: 200 }

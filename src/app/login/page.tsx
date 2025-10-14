@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
+import type { AppDispatch } from "@/lib/redux/store";
 import { fetchMe } from "@/lib/redux/slices/authSlice";
 import Link from "next/link";
 
@@ -11,7 +12,7 @@ export default function LoginPage() {
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
 
   useEffect(() => {
     (async () => {
@@ -35,7 +36,7 @@ export default function LoginPage() {
       setLoading(false);
       return;
     }
-    await dispatch<any>(fetchMe());
+    await dispatch(fetchMe());
     router.push("/");
   }
 

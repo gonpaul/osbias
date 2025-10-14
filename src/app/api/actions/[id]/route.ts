@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getActionById, updateAction, deleteAction } from "../../../../models/life";
+import type { UpdateAction } from "../../../../models/life";
 
 /**
  * @swagger
@@ -80,10 +81,10 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const body = await req.json();
+  const body: Partial<{ description: string; completed: boolean; due_date: string | null }> = await req.json();
   const { description, completed, due_date } = body;
-  
-  const updates: any = {};
+
+  const updates: Partial<UpdateAction> = {};
   if (description) updates.description = description;
   if (completed !== undefined) updates.completed = completed;
   if (due_date !== undefined) updates.due_date = due_date;

@@ -29,7 +29,7 @@ export function assertOwner(user: User, ownerId: number) {
 export function handleAuthz<T>(fn: () => Promise<T>) {
   return fn().catch((e) => {
     if (e instanceof AuthError) {
-      return NextResponse.json({ error: e.message }, { status: e.status }) as any;
+      return NextResponse.json({ error: e.message }, { status: e.status });
     }
     throw e;
   });

@@ -17,6 +17,8 @@ export default function ProfilePage() {
     maxTokens: 512
   });
   const [msg, setMsg] = useState("");
+  const [openaiKey, setOpenaiKey] = useState("");
+  const [anthropicKey, setAnthropicKey] = useState("");
 
   useEffect(() => {
     (async () => {
@@ -24,6 +26,8 @@ export default function ProfilePage() {
       if (m.ok) {
         const me = await m.json();
         setName(me.name); setEmail(me.email);
+        // keys are not returned for security, but we can show presence flags
+        // if you want to prefill, leave empty for safety
       }
       const p = await fetch("/api/users/me/preferences", { credentials: "include" });
       if (p.ok) {
@@ -49,7 +53,7 @@ export default function ProfilePage() {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
-      body: JSON.stringify({ name, email }),
+      body: JSON.stringify({ name, email, openai_api_key: openaiKey || null, anthropic_api_key: anthropicKey || null }),
     });
     setMsg(res.ok ? "Profile saved" : "Failed to save profile");
   }
@@ -310,6 +314,39 @@ export default function ProfilePage() {
                 className="mt-2 text-lg cursor-pointer bg-[color:var(--emphasis)] text-white font-semibold py-2 px-4 lg:px-[1.8vw] rounded hover:opacity-85 transition-opacity duration-300 w-full md:w-auto"
               >
                 Save AI preferences
+              </button>
+            </form>
+          </section>
+
+          <section className="rounded-xl bg-[color:var(--darkelbg)] p-6 md:p-[2.5vw] xl:p-[2vw] shadow">
+            <h2 className="text-xl font-semibold mb-4">API Keys</h2>
+            <form onSubmit={saveProfile} className="flex flex-col gap-6">
+              <label className="flex flex-col gap-2">
+                <span className="text-lg">OpenAI API Key</span>
+                <input
+                  type="password"
+                  className="border border-gray-300 text-[clamp(1rem,0.95rem+0.3vw,1.125rem)] rounded-md px-3 py-2 bg-white text-[color:var(--secondary)] focus:outline-none focus:ring-2 focus:ring-emphasis"
+                  value={openaiKey}
+                  onChange={e => setOpenaiKey(e.target.value)}
+                  placeholder="sk-..."
+                  autoComplete="off"
+                />
+                <span className="text-sm text-gray-500">Leave blank to keep unchanged. Enter null to remove.</span>
+              </label>
+              <label className="flex flex-col gap-2">
+                <span className="text-lg">Anthropic API Key</span>
+                <input
+                  type="password"
+                  className="border border-gray-300 text-[clamp(1rem,0.95rem+0.3vw,1.125rem)] rounded-md px-3 py-2 bg-white text-[color:var(--secondary)] focus:outline-none focus:ring-2 focus:ring-emphasis"
+                  value={anthropicKey}
+                  onChange={e => setAnthropicKey(e.target.value)}
+                  placeholder="anthropic-key..."
+                  autoComplete="off"
+                />
+                <span className="text-sm text-gray-500">Leave blank to keep unchanged. Enter null to remove.</span>
+              </label>
+              <button className="mt-2 text-lg cursor-pointer bg-[color:var(--emphasis)] text-white font-semibold py-2 px-4 lg:px-[1.8vw] rounded hover:opacity-85 transition-opacity duration-300 w-full md:w-auto">
+                Save API keys
               </button>
             </form>
           </section>

@@ -1,5 +1,5 @@
 import db from "../lib/db";
-import { ID, Insertable, Updatable, Timestamps, WithID } from "./common";
+import { Insertable, Updatable, Timestamps, WithID } from "./common";
 
 export interface ValidationStep {
   id: string;
@@ -35,7 +35,9 @@ export type UpdateValidationHistory = Updatable<ValidationHistory>;
 
 export async function createValidationHistory(data: NewValidationHistory): Promise<ValidationHistory> {
   const [id] = await db('validation_history').insert(data);
-  return getValidationHistoryById(id);
+  const created = await getValidationHistoryById(id);
+  if (!created) throw new Error('Validation history insert failed');
+  return created;
 }
 
 export async function getValidationHistoryById(id: number): Promise<ValidationHistory | null> {

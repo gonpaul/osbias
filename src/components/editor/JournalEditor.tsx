@@ -13,13 +13,14 @@ import { history, historyKeymap } from "@codemirror/commands";
 import { defaultKeymap } from "@codemirror/commands";
 import { useSelector, useDispatch } from 'react-redux';
 import type { JournalEntry } from '@/lib/redux/slices/journalEntriesSlice';
-import { setEntries } from '@/lib/redux/slices/journalEntriesSlice';
+import { setEntries, updateEntry } from '@/lib/redux/slices/journalEntriesSlice';
 import { getModelsByProvider } from "@/lib/config/ai-models";
 import { FaHistory } from 'react-icons/fa';
 
 // Use currentJournalSlice for current, title, content, saveState, preview
 import {
   setCurrent,
+  setCurrentMeta,
   setTitle,
   setContent,
   setSaveState,
@@ -33,20 +34,30 @@ function CMEditor({
   value,
   onChange,
   vimEnabled = false,
+  editable = true,
+  locked = false,
+  onUnlock,
+  focusTick,
 }: {
   value: string;
   onChange: (val: string) => void;
   editable?: boolean;
   vimEnabled?: boolean;
+  locked?: boolean;
+  onUnlock?: () => void;
+  focusTick?: number;
 }) {
   const editorRef = useRef<HTMLDivElement | null>(null);
   const viewRef = useRef<EditorView | null>(null);
   const vimCompartmentRef = useRef<Compartment | null>(null);
+  const editableCompartmentRef = useRef<Compartment | null>(null);
   const onChangeRef = useRef(onChange);
   const initialValueRef = useRef(value);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const effectsRef = useRef<{ addPopup: any; clearPopups: any } | null>(null);
   onChangeRef.current = onChange;
+  const onUnlockRef = useRef(onUnlock);
+  onUnlockRef.current = onUnlock;
 
   // (moved) publish info bridge is implemented inside JournalEditor, not CMEditor
 
@@ -61,6 +72,12 @@ function CMEditor({
       },
       ".cm-activeLine": {
         background: "#2a2a3a"
+      },
+      ".cm-placeholder-line": {
+        color: "var(--secondary)",
+        opacity: 0.6,
+        userSelect: "none",
+        pointerEvents: "none",
       },
       // Vim normal mode block (fat) cursor
       // ".cm-fat-cursor .cm-cursor": {
@@ -97,6 +114,7 @@ function CMEditor({
 
     // Store references to effects for use in other functions
     effectsRef.current = { addPopup, clearPopups };
+
 
     class SuggestionWidget extends WidgetType {
       private view: EditorView;
@@ -164,9 +182,10 @@ function CMEditor({
         return container;
       }
       destroy(dom: HTMLElement) {
-        if (this.root) {
-          this.root.unmount();
-          this.root = null;
+        const root = this.root;
+        this.root = null;
+        if (root) {
+          Promise.resolve().then(() => root.unmount());
         }
         super.destroy(dom);
       }
@@ -211,9 +230,10 @@ function CMEditor({
         return container;
       }
       destroy(dom: HTMLElement) {
-        if (this.root) {
-          this.root.unmount();
-          this.root = null;
+        const root = this.root;
+        this.root = null;
+        if (root) {
+          Promise.resolve().then(() => root.unmount());
         }
         super.destroy(dom);
       }
@@ -226,6 +246,8 @@ function CMEditor({
 
     const vimCompartment = new Compartment();
     vimCompartmentRef.current = vimCompartment;
+    const editableCompartment = new Compartment();
+    editableCompartmentRef.current = editableCompartment;
 
     const state = EditorState.create({
       doc: initialValueRef.current,
@@ -234,7 +256,7 @@ function CMEditor({
         keymap.of([...defaultKeymap, ...historyKeymap]),
         history(),
         drawSelection(),
-        EditorView.editable.of(true),
+        editableCompartment.of(EditorView.editable.of(editable)),
         EditorView.lineWrapping,
         EditorView.updateListener.of((update) => {
           if (update.docChanged) {
@@ -374,16 +396,34 @@ function CMEditor({
     };
   }, []);
 
+  // Reconfigure editability based on props
+  useEffect(() => {
+    const view = viewRef.current;
+    const editableCompartment = editableCompartmentRef.current;
+    if (!view || !editableCompartment) return;
+    const allow = editable && !locked;
+    view.dispatch({ effects: editableCompartment.reconfigure(EditorView.editable.of(allow)) });
+  }, [editable, locked]);
+
+
+  // Refocus editor when parent requests (e.g., after preview -> editor toggle)
+  useEffect(() => {
+    if (focusTick == null) return;
+    const view = viewRef.current;
+    if (!view) return;
+    // Use microtask to allow visibility/layout updates before focusing
+    Promise.resolve().then(() => view.focus());
+  }, [focusTick]);
+
   // Keep editor in sync with value prop
   useEffect(() => {
     const view = viewRef.current;
     if (!view) return;
-    const currentVal = view.state.doc.toString();
-    if (value !== currentVal) {
-      view.dispatch({
-        changes: { from: 0, to: currentVal.length, insert: value },
-      });
-    }
+    const current = view.state.doc.toString();
+    if (current === value) return;
+    view.dispatch({
+      changes: { from: 0, to: current.length, insert: value },
+    });
   }, [value]);
 
   // Toggle Vim
@@ -454,6 +494,10 @@ function CMEditor({
       
       toDOM() {
         const container = document.createElement('div');
+        container.setAttribute('contenteditable', 'false');
+        container.style.userSelect = 'none';
+        container.style.setProperty('-webkit-user-select', 'none');
+        container.style.setProperty('-ms-user-select', 'none');
         container.style.margin = '8px 0';
         container.style.padding = '12px';
         container.style.border = '1px solid #374151';
@@ -501,7 +545,9 @@ function CMEditor({
               <div className="flex gap-2 justify-end">
                 <button
                   className="px-3 py-1 rounded bg-(--darkelbg) text-(--foreground) text-sm hover:opacity-80"
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
                     this.view.dispatch({ effects: [effectsRef.current!.clearPopups.of(null)] });
                     Promise.resolve().then(() => this.view.focus());
                   }}
@@ -518,9 +564,10 @@ function CMEditor({
       }
       
       destroy(dom: HTMLElement) {
-        if (this.root) {
-          this.root.unmount();
-          this.root = null;
+        const root = this.root;
+        this.root = null;
+        if (root) {
+          Promise.resolve().then(() => root.unmount());
         }
         super.destroy(dom);
       }
@@ -563,6 +610,10 @@ function CMEditor({
       
       toDOM() {
         const container = document.createElement('div');
+        container.setAttribute('contenteditable', 'false');
+        container.style.userSelect = 'none';
+        container.style.setProperty('-webkit-user-select', 'none');
+        container.style.setProperty('-ms-user-select', 'none');
         container.style.margin = '8px 0';
         container.style.padding = '12px';
         container.style.border = '1px solid #374151';
@@ -583,7 +634,9 @@ function CMEditor({
               <div className="flex gap-2 justify-end">
                 <button
                   className="px-3 py-1 rounded bg-(--emphasis) text-white text-sm hover:opacity-80"
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
                     // Replace the original text with paraphrased text
                     const tr = this.view.state.update({
                       changes: { 
@@ -602,7 +655,9 @@ function CMEditor({
                 </button>
                 <button
                   className="px-3 py-1 rounded bg-(--darkelbg) text-(--foreground) text-sm hover:opacity-80"
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
                     this.view.dispatch({ effects: [effectsRef.current!.clearPopups.of(null)] });
                     Promise.resolve().then(() => this.view.focus());
                   }}
@@ -619,9 +674,10 @@ function CMEditor({
       }
       
       destroy(dom: HTMLElement) {
-        if (this.root) {
-          this.root.unmount();
-          this.root = null;
+        const root = this.root;
+        this.root = null;
+        if (root) {
+          Promise.resolve().then(() => root.unmount());
         }
         super.destroy(dom);
       }
@@ -799,9 +855,10 @@ function CMEditor({
       }
       
       destroy(dom: HTMLElement) {
-        if (this.root) {
-          this.root.unmount();
-          this.root = null;
+        const root = this.root;
+        this.root = null;
+        if (root) {
+          Promise.resolve().then(() => root.unmount());
         }
         super.destroy(dom);
       }
@@ -812,12 +869,14 @@ function CMEditor({
     class HelloWidget extends WidgetType {
       private view: EditorView;
       private onClose: () => void;
+      private onUnlock?: () => void;
       private root: Root | null = null;
       
-      constructor(view: EditorView, onClose: () => void) {
+      constructor(view: EditorView, onClose: () => void, onUnlock?: () => void) {
         super();
         this.view = view;
         this.onClose = onClose;
+        this.onUnlock = onUnlock;
       }
       
       eq() { return true; }
@@ -909,6 +968,7 @@ function CMEditor({
                   onClick={() => {
                     this.view.dispatch({ effects: [effectsRef.current!.clearPopups.of(null)] });
                     Promise.resolve().then(() => this.view.focus());
+                    if (this.onUnlock) this.onUnlock();
                   }}
                 >
                   Continue Blank
@@ -923,9 +983,10 @@ function CMEditor({
       }
       
       destroy(dom: HTMLElement) {
-        if (this.root) {
-          this.root.unmount();
-          this.root = null;
+        const root = this.root;
+        this.root = null;
+        if (root) {
+          Promise.resolve().then(() => root.unmount());
         }
         super.destroy(dom);
       }
@@ -940,6 +1001,10 @@ function CMEditor({
           widget: new (class extends WidgetType {
             toDOM() {
               const div = document.createElement('div');
+              div.setAttribute('contenteditable', 'false');
+              div.style.userSelect = 'none';
+              div.style.setProperty('-webkit-user-select', 'none');
+              div.style.setProperty('-ms-user-select', 'none');
               div.style.margin = '8px 0';
               div.style.padding = '8px';
               div.style.border = '1px solid #374151';
@@ -953,9 +1018,13 @@ function CMEditor({
           })(),
           block: true,
           side: 1,
-        }).range(from);
+        }).range(to);
         
+        // Insert loading widget and restore selection immediately
+        const biasLoadingOriginalSelection = view.state.selection;
         view.dispatch({ effects: [effectsRef.current!.clearPopups.of(null), effectsRef.current!.addPopup.of(loadingDeco)] });
+        view.dispatch({ selection: biasLoadingOriginalSelection, scrollIntoView: false });
+        view.focus();
         
         // Get user preferences
         const userPrefs = await fetchUserPreferences();
@@ -1057,9 +1126,13 @@ function CMEditor({
           ),
           block: true,
           side: 1,
-        }).range(from);
+        }).range(to);
         
+        // Insert widget and restore selection immediately
+        const biasOriginalSelection = view.state.selection;
         view.dispatch({ effects: [effectsRef.current!.clearPopups.of(null), effectsRef.current!.addPopup.of(biasDeco)] });
+        view.dispatch({ selection: biasOriginalSelection, scrollIntoView: false });
+        view.focus();
         
       } catch (error) {
         console.error('Bias analysis error:', error);
@@ -1094,6 +1167,10 @@ function CMEditor({
           widget: new (class extends WidgetType {
             toDOM() {
               const div = document.createElement('div');
+              div.setAttribute('contenteditable', 'false');
+              div.style.userSelect = 'none';
+              div.style.setProperty('-webkit-user-select', 'none');
+              div.style.setProperty('-ms-user-select', 'none');
               div.style.margin = '8px 0';
               div.style.padding = '8px';
               div.style.border = '1px solid #374151';
@@ -1106,10 +1183,14 @@ function CMEditor({
             ignoreEvent() { return true; }
           })(),
           block: true,
-          side: 1,
+          side: -1,
         }).range(from);
         
+        // Insert loading widget and restore selection immediately
+        const loadingOriginalSelection = view.state.selection;
         view.dispatch({ effects: [effectsRef.current!.clearPopups.of(null), effectsRef.current!.addPopup.of(loadingDeco)] });
+        view.dispatch({ selection: loadingOriginalSelection, scrollIntoView: false });
+        view.focus();
         
         // Get user preferences
         const userPrefs = await fetchUserPreferences();
@@ -1121,7 +1202,7 @@ function CMEditor({
           credentials: 'include',
           body: JSON.stringify({
             prompt: `Please paraphrase the following text while maintaining its original meaning and tone:\n\n"${text}"`,
-            system: 'You are a helpful writing assistant. Paraphrase the given text while preserving the original meaning, tone, and intent. Make it clear and well-written. Return only the paraphrased result',
+            system: 'You are a helpful writing assistant. Paraphrase the given text while preserving the original meaning, tone, and intent. Make it clear and well-written. Return only the paraphrased result without quotes',
             provider: userPrefs.provider,
             model: userPrefs.model,
             maxTokens: userPrefs.maxTokens,
@@ -1147,10 +1228,14 @@ function CMEditor({
             }
           ),
           block: true,
-          side: 1,
+          side: -1,
         }).range(from);
         
+        // Insert widget and immediately restore original selection to avoid including widget
+        const originalSelection = view.state.selection;
         view.dispatch({ effects: [effectsRef.current!.clearPopups.of(null), effectsRef.current!.addPopup.of(paraphraseDeco)] });
+        view.dispatch({ selection: originalSelection, scrollIntoView: false });
+        view.focus();
         
       } catch (error) {
         console.error('Paraphrasing error:', error);
@@ -1185,6 +1270,10 @@ function CMEditor({
           widget: new (class extends WidgetType {
             toDOM() {
               const div = document.createElement('div');
+              div.setAttribute('contenteditable', 'false');
+              div.style.userSelect = 'none';
+              div.style.setProperty('-webkit-user-select', 'none');
+              div.style.setProperty('-ms-user-select', 'none');
               div.style.margin = '8px 0';
               div.style.padding = '8px';
               div.style.border = '1px solid #374151';
@@ -1198,9 +1287,13 @@ function CMEditor({
           })(),
           block: true,
           side: 1,
-        }).range(from);
+        }).range(to);
         
+        // Insert loading widget and restore selection immediately
+        const validationLoadingOriginalSelection = view.state.selection;
         view.dispatch({ effects: [effectsRef.current!.clearPopups.of(null), effectsRef.current!.addPopup.of(loadingDeco)] });
+        view.dispatch({ selection: validationLoadingOriginalSelection, scrollIntoView: false });
+        view.focus();
         
         // Get user preferences
         const userPrefs = await fetchUserPreferences();
@@ -1338,9 +1431,13 @@ Return as JSON with this structure:
           ),
           block: true,
           side: 1,
-        }).range(from);
+        }).range(to);
         
+        // Insert widget and restore selection immediately
+        const validationOriginalSelection = view.state.selection;
         view.dispatch({ effects: [effectsRef.current!.clearPopups.of(null), effectsRef.current!.addPopup.of(resultDeco)] });
+        view.dispatch({ selection: validationOriginalSelection, scrollIntoView: false });
+        view.focus();
         
       } catch (error) {
         console.error('Idea validation error:', error);
@@ -1458,7 +1555,8 @@ Return as JSON with this structure:
           () => {
             view.dispatch({ effects: [effectsRef.current!.clearPopups.of(null)] });
             Promise.resolve().then(() => view.focus());
-          }
+          },
+          () => { if (onUnlockRef.current) onUnlockRef.current(); }
         ),
         block: true,
         side: 1,
@@ -1482,14 +1580,8 @@ Return as JSON with this structure:
   return (
     <div
       ref={editorRef}
-      style={{
-        background: "var(--darkelbg, #181a20)",
-        minHeight: 240,
-        height: "100%",
-        width: "100%",
-        fontSize: "1rem",
-        overflow: "auto",
-      }}
+      className="bg-(--) min-h-[240px] h-full w-full text-base
+      overflow-auto focus:outline-none"
       tabIndex={0}
     />
   );
@@ -1543,7 +1635,7 @@ function CMInlineChat({ selectedText, onClose, onResult }: { selectedText: strin
     el.style.height = el.scrollHeight + 'px';
   }, [input]);
 
-  async function handleSend() {
+  const handleSend = async () => {
     if (!input.trim() || !userPrefs || !selectedModel) return;
     setLoading(true);
     setErr(null);
@@ -1664,10 +1756,14 @@ export default function JournalEditor() {
   // Track the latest title/content at the time of save
   const latestTitleRef = useRef(title);
   const latestContentRef = useRef(content);
+  const lastSavedTitleRef = useRef(title);
+  const lastSavedContentRef = useRef(content);
+  const mountedRef = useRef(false);
   // const lastInsertEventRef = useRef<{ text: string; at: number } | null>(null);
 
   // Vim mode state
   const [vimMode, setVimMode] = useState(false);
+  const [focusTick, setFocusTick] = useState(0);
   // Dismiss starter inline panel for current blank draft
   const [starterDismissed, setStarterDismissed] = useState(false);
   
@@ -1689,7 +1785,9 @@ export default function JournalEditor() {
 
   // Announce when a brand-new blank draft is opened so the UI can show template chooser
   useEffect(() => {
-    const isBlankDraft = !!current && current.id === -1 && (title.trim().length === 0) && (content.trim().length === 0);
+    const isBlankDraft = !!current && 
+      (title.trim().length === 0 || title.trim().toLowerCase() === 'untitled') && 
+      (content.trim().length === 0);
     if (isBlankDraft && !announcedBlankRef.current) {
       emitUIEvent('blank-entry-opened');
       // Also trigger the hello widget for new entries
@@ -1711,6 +1809,13 @@ export default function JournalEditor() {
       return () => clearTimeout(timer);
     }
   }, [current]);
+  
+  // Reset starter dismissed state when switching to a new entry
+  useEffect(() => {
+    if (current?.id === -1) {
+      setStarterDismissed(false);
+    }
+  }, [current?.id]);
 
   // Framework insertion handler
   const handleFrameworkInsertion = useCallback((event: CustomEvent) => {
@@ -1743,8 +1848,6 @@ export default function JournalEditor() {
     // Add the new entry to the entries list so it appears in FileSystem
     dispatch(setEntries([draft, ...entries]));
     dispatch(setCurrent(draft));
-    dispatch(setTitle(title));
-    dispatch(setContent(content));
     dispatch(setSaveState('idle'));
     
     console.log('New entry created and set as current');
@@ -1769,61 +1872,6 @@ export default function JournalEditor() {
 
   // Add event listener for framework insertion and journal template application
   useEffect(() => {
-    const handleInsertFramework = (event: Event) => {
-      handleFrameworkInsertion(event as CustomEvent);
-    };
-
-    const handleCreateEntryWithFramework = (event: Event) => {
-      const customEvent = event as CustomEvent;
-      const { frameworkId, content, title } = customEvent.detail;
-      
-      // Create new journal entry with framework content
-      createNewEntryWithFramework(frameworkId, content, title);
-    };
-
-    const handleOpenEntryId = async (event: Event) => {
-      const customEvent = event as CustomEvent;
-      const { id } = customEvent.detail as { id: number };
-      try {
-        const res = await fetch(`/api/journal/${id}`, { credentials: 'include' });
-        if (res.ok) {
-          const entry = await res.json() as JournalEntry;
-          // Prepend to list if missing
-          if (!entries.find(e => e.id === entry.id)) {
-            dispatch(setEntries([entry, ...entries]));
-          }
-          dispatch(setCurrent(entry));
-          dispatch(setTitle(entry.title || ''));
-          dispatch(setContent(entry.content || ''));
-          dispatch(setSaveState('idle'));
-
-          // If this is the first time this entry is opened on this client, and it's blank,
-          // announce so the starter overlay can appear
-          try {
-            const key = `starterShown:${entry.id}`;
-            const shown = localStorage.getItem(key);
-            const blank = ((entry.title || '').trim().length === 0 || (entry.title || '').trim().toLowerCase() === 'untitled')
-                          && (entry.content || '').trim().length === 0;
-            if (!shown && blank) {
-              window.dispatchEvent(new CustomEvent('blank-entry-opened'));
-            }
-            if (!shown) localStorage.setItem(key, '1');
-          } catch {}
-        }
-      } catch {
-        // ignore
-      }
-    };
-
-    const handleReplaceCurrentContent = (event: Event) => {
-      const customEvent = event as CustomEvent;
-      const { text } = customEvent.detail as { text: string };
-      // Replace editor content fully
-      dispatch(setContent(text));
-      latestContentRef.current = text;
-      scheduleSave();
-    };
-
 
     const handleDownloadCurrentEntry = () => {
       if (!current || !title || !content) {
@@ -1862,8 +1910,6 @@ export default function JournalEditor() {
               dispatch(setEntries([entry, ...entries]));
             }
             dispatch(setCurrent(entry));
-            dispatch(setTitle(entry.title || ''));
-            dispatch(setContent(entry.content || ''));
             dispatch(setSaveState('idle'));
             try {
               const key = `starterShown:${entry.id}`;
@@ -1883,6 +1929,8 @@ export default function JournalEditor() {
     const offReplace = onUIEvent('replace-current-content', ({ text }) => {
       dispatch(setContent(text));
       latestContentRef.current = text;
+      // Close starter/lock once template is applied
+      setStarterDismissed(true);
       scheduleSave();
     });
     
@@ -1910,6 +1958,10 @@ export default function JournalEditor() {
   const saveNow = async () => {
     if (!dirtyRef.current) return;
     dispatch(setSaveState('saving'));
+    
+    // Store current state for potential rollback
+    const backupEntry = current;
+    
     try {
       // Always use the latest value at save time
       const saveTitle = latestTitleRef.current;
@@ -1927,6 +1979,8 @@ export default function JournalEditor() {
         if (!res.ok) throw new Error('POST failed');
         const created = await res.json() as JournalEntry;
         dispatch(setEntries([created, ...entries]));
+        // Update only current entry metadata; do not touch buffer
+        dispatch(setCurrentMeta(created));
       } else {
         const res = await fetch(`/api/journal/${current.id}`, {
           method: 'PUT',
@@ -1940,19 +1994,44 @@ export default function JournalEditor() {
         if (!res.ok) throw new Error('PUT failed');
         const updated = await res.json() as JournalEntry;
         dispatch(setEntries(entries.map(x => x.id === updated.id ? updated : x)));
+        // Update only current entry metadata; do not touch buffer
+        dispatch(setCurrentMeta(updated));
       }
       dispatch(setSaveState('saved'));
       dirtyRef.current = false;
-    } catch {
+      // Track last saved values to avoid redundant saves
+      lastSavedTitleRef.current = latestTitleRef.current;
+      lastSavedContentRef.current = latestContentRef.current;
+    } catch (error) {
+      // Rollback the optimistic update if save failed
+      if (backupEntry) {
+        dispatch(updateEntry(backupEntry));
+      }
       dispatch(setSaveState('error'));
     }
   };
+
+  // Debounced autosave on title/content changes as a safety net
+  useEffect(() => {
+    if (!mountedRef.current) {
+      mountedRef.current = true;
+      return;
+    }
+    if (title === lastSavedTitleRef.current && content === lastSavedContentRef.current) return;
+    dirtyRef.current = true;
+    dispatch(setSaveState('idle'));
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      void saveNow();
+    }, 1200);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [title, content]);
 
   useEffect(() => {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, []);
+  });
 
   const Saving = () => {
     let text = '';
@@ -1977,7 +2056,7 @@ export default function JournalEditor() {
     }
   };
 
-  // Global shortcuts: Alt+V for Vim mode, Alt+H for History
+  // Global shortcuts: Alt+V for Vim, Alt+H for History, Alt+P for Preview
   useEffect(() => {
     const onGlobalKey = (e: KeyboardEvent) => {
       if (e.altKey && (e.key === 'v' || e.key === 'V')) {
@@ -1988,12 +2067,23 @@ export default function JournalEditor() {
         e.preventDefault();
         setShowHistory(prev => !prev);
       }
+      if (e.altKey && (e.key === 'p' || e.key === 'P')) {
+        e.preventDefault();
+        const goingToPreview = !preview;
+        dispatch(setPreview(goingToPreview));
+        if (!goingToPreview) {
+          // Coming back to editor: request CM focus
+          setFocusTick(t => t + 1);
+        }
+      }
     };
     window.addEventListener('keydown', onGlobalKey, true);
     return () => window.removeEventListener('keydown', onGlobalKey, true);
-  }, []);
+  }, [dispatch, preview]);
 
-  const isBlankDraft = !!current && current.id === -1 && (title.trim().length === 0) && (content.trim().length === 0);
+  const isBlankDraft = !!current && 
+    (title.trim().length === 0 || title.trim().toLowerCase() === 'untitled') && 
+    (content.trim().length === 0);
   const showStarterInline = isBlankDraft && !starterDismissed;
 
   return (
@@ -2038,9 +2128,17 @@ export default function JournalEditor() {
         placeholder="Title..."
         value={title}
         onChange={(e) => {
-          dispatch(setTitle(e.target.value));
+          const newTitle = e.target.value;
+          dispatch(setTitle(newTitle));
           // Update ref immediately so saveNow always gets latest
-          latestTitleRef.current = e.target.value;
+          latestTitleRef.current = newTitle;
+          
+          // IMMEDIATELY update the entry in the entries list for instant filesystem visibility
+          if (current && current.id !== -1) {
+            const updatedEntry = { ...current, title: newTitle };
+            dispatch(updateEntry(updatedEntry));
+          }
+          
           scheduleSave();
         }}
       />
@@ -2054,46 +2152,42 @@ export default function JournalEditor() {
         </div>
       )}
 
-      {showStarterInline && (
-        <div className="mb-3">
-          {/* Inline starter: open existing pickers via events so app/page drives modals */}
-          <div className="w-full p-5 border border-(--secondary)/30 rounded-xl bg-(--darkelbg)">
-            <h3 className="text-xl font-bold mb-2">Pick a template to get started</h3>
-            <p className="text-(--secondary) mb-4">Choose a saved journal template or apply a thinking framework. You can also continue with a blank page.</p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <button onClick={() => { setStarterDismissed(true); window.dispatchEvent(new CustomEvent('open-journal-templates')); }} className="text-left rounded-lg border border-(--secondary)/30 hover:border-(--golden)/50 bg-(--background) p-4 transition-colors duration-300 cursor-pointer">
-                <div className="text-base font-semibold mb-1">Journal template</div>
-                <div className="text-(--secondary) text-sm">Reusable entry with prompts.</div>
-              </button>
-              <button onClick={() => { setStarterDismissed(true); window.dispatchEvent(new CustomEvent('open-framework-templates')); }} className="text-left rounded-lg border border-(--secondary)/30 hover:border-(--golden)/50 bg-(--background) p-4 transition-colors duration-300 cursor-pointer">
-                <div className="text-base font-semibold mb-1">Framework template</div>
-                <div className="text-(--secondary) text-sm">Thinking framework with steps.</div>
-              </button>
-              <button onClick={() => { setStarterDismissed(true); }} className="text-left rounded-lg border border-(--secondary)/30 hover:border-(--golden)/50 bg-(--background) p-4 transition-colors duration-300 cursor-pointer">
-                <div className="text-base font-semibold mb-1">Continue as is</div>
-                <div className="text-(--secondary) text-sm">Proceed without a template.</div>
-              </button>
-            </div>
+      <div className={`flex-1 w-full relative ${preview ? 'hidden' : ''}`}>
+        {(() => {
+          console.log('isBlankDraft components:');
+          console.log('- !!current:', !!current);
+          console.log('- current.id:', current?.id);
+          console.log('- current.id === -1:', current?.id === -1);
+          console.log('- title.trim().length === 0:', title.trim().length === 0);
+          console.log('- content.trim().length === 0:', content.trim().length === 0);
+          console.log('- title:', title);
+          console.log('- content:', content);
+          // Add console statements for showStarterInline as well
+          console.log('- showStarterInline:', showStarterInline);
+          return false;
+        })()}
+        {(!content || content.trim().length === 0) && !showStarterInline && (
+          <div className="pointer-events-none absolute top-2 left-4 text-(--secondary) text-md opacity-60 select-none">
+            Start writing here...
           </div>
-        </div>
-      )}
-
-      {preview ? (
+        )}
+        <CMEditor
+          value={content}
+          onChange={val => {
+            dispatch(setContent(val));
+            latestContentRef.current = val;
+            scheduleSave();
+          }}
+          editable={true}
+          vimEnabled={vimMode}
+          locked={showStarterInline}
+          onUnlock={() => setStarterDismissed(true)}
+          focusTick={focusTick}
+        />
+      </div>
+      {preview && (
         <div className="flex-1 w-full rounded bg-transparent">
           <MarkdownPreview content={content} />
-        </div>
-      ) : (
-        <div className="flex-1 w-full relative">
-          <CMEditor
-            value={content}
-            onChange={val => {
-              dispatch(setContent(val));
-              latestContentRef.current = val;
-              scheduleSave();
-            }}
-            editable={true}
-            vimEnabled={vimMode}
-          />
         </div>
       )}
     </div>

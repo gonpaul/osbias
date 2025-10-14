@@ -43,11 +43,12 @@ import { createFrameworkUsage } from "@/models/knowledge";
  */
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   return handleAuthz(async () => {
     const authUser = await requireAuth(req);
-    const frameworkId = parseInt(params.id);
+    const { id } = await params;
+    const frameworkId = parseInt(id);
     
     if (isNaN(frameworkId)) {
       return NextResponse.json(
@@ -56,7 +57,10 @@ export async function POST(
       );
     }
 
-    const body = await req.json().catch(() => ({}));
+    let body: Partial<{ entry_id: number | null; notes: string | null; completed: boolean }> = {};
+    try {
+      body = await req.json();
+    } catch {}
     const { entry_id, notes, completed = false } = body;
 
     const usage = await createFrameworkUsage({

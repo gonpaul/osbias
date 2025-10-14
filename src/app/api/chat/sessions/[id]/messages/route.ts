@@ -9,7 +9,10 @@ export async function GET(
   return handleAuthz(async () => {
     const user = await requireAuth(req);
     const { id } = await params;
-    const sessionId = parseInt(id);
+    const sessionId = Number(id);
+    if (!Number.isFinite(sessionId)) {
+      return NextResponse.json({ error: 'Invalid session id' }, { status: 400 });
+    }
     const messages = await getMessages(sessionId, user.id);
     return NextResponse.json(messages);
   });
@@ -22,7 +25,10 @@ export async function POST(
   return handleAuthz(async () => {
     const user = await requireAuth(req);
     const { id } = await params;
-    const sessionId = parseInt(id);
+    const sessionId = Number(id);
+    if (!Number.isFinite(sessionId)) {
+      return NextResponse.json({ error: 'Invalid session id' }, { status: 400 });
+    }
     const { role, content } = await req.json();
     if (!content || (role !== 'user' && role !== 'assistant')) {
       return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });

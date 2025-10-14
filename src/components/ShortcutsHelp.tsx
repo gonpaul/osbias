@@ -74,6 +74,15 @@ export default function ShortcutsHelp() {
                   <span className="px-2 py-1 bg-(--background) border border-(--secondary)/30 rounded">V</span>
                 </span>
               </li>
+
+              <li className="flex items-center gap-3">
+                <span>Toggle preview</span>
+                <span className="flex items-center gap-1 text-(--secondary)">
+                  <span className="px-2 py-1 bg-(--background) border border-(--secondary)/30 rounded">Alt</span>
+                  <span>+</span>
+                  <span className="px-2 py-1 bg-(--background) border border-(--secondary)/30 rounded">P</span>
+                </span>
+              </li>
             </ul>
           </div>
           <div>

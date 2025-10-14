@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "next dev --turbopack -p 3001",
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "eslint",
@@ -12,6 +12,8 @@
     "seed:dev": "knex seed:run --env development",
     "db:migrate": "knex migrate:latest",
     "db:rollback": "knex migrate:rollback",
+    "db:backup": "tsx scripts/backup-db.ts",
+    "db:migrate:safe": "pnpm run db:backup && pnpm run db:migrate",
     "test:e2e": "playwright test"
   },
   "dependencies": {

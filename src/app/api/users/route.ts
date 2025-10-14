@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getUsers, createUser } from "../../../models/user";
+import { requireAuth, requireRole, handleAuthz } from "@/lib/authz";
+import db from "@/lib/db";
+import type { User } from "@/models/user";
+import { getRemainingQuota } from "@/lib/rateLimit";
 
 /**
  * @swagger
@@ -46,6 +49,57 @@ import { getUsers, createUser } from "../../../models/user";
  *         error:
  *           type: string
  */
+export async function GET(req: NextRequest) {
+  return handleAuthz(async () => {
+    const authUser = await requireAuth(req);
+    requireRole(authUser, "admin");
+
+    const { searchParams } = new URL(req.url);
+    const q = (searchParams.get("q") || "").trim();
+    const role = searchParams.get("role");
+    const isTest = searchParams.get("is_test_user");
+    const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "20")));
+    const offset = (page - 1) * limit;
+
+    let query = db<User>("users").select(
+      "id",
+      "name",
+      "email",
+      "role",
+      "is_test_user",
+      "rate_limit_quota",
+      "exempt_from_rate_limit",
+      "allow_posting",
+      "plan",
+      "created_at",
+      "updated_at"
+    );
+
+    if (q) {
+      query = query.where((qb) => {
+        qb.whereILike("email", `%${q}%`).orWhereILike("name", `%${q}%`);
+      });
+    }
+    if (role === "user" || role === "admin") {
+      query = query.andWhere({ role });
+    }
+    if (isTest === "true" || isTest === "false") {
+      query = query.andWhere({ is_test_user: isTest === "true" });
+    }
+
+    const [rawRows, [{ count }]] = await Promise.all([
+      query.clone().orderBy("created_at", "desc").limit(limit).offset(offset),
+      db("users").count<{ count: number }>("id as count").first().then((r) => [r || { count: 0 }]),
+    ]);
+    // attach remaining quota
+    const rows = await Promise.all(
+      rawRows.map(async (u) => ({ ...u, remaining_quota: await getRemainingQuota(u as User) }))
+    );
+
+    return NextResponse.json({ page, limit, total: Number(count || 0), rows });
+  });
+}
 
 /**
  * @swagger

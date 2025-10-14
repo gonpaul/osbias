@@ -274,3 +274,48 @@
 - ✅ Chat empty state added with quick-start suggestions; input anchored to
   bottom
 - ✅ Sidebar hidden on auth routes using `SidebarGate`
+
+### User Management, Rate Limiting, and Admin (October 2025)
+- ✅ Server API key policy
+  - Admins and test users use server `OPENAI_API_KEY`/`ANTHROPIC_API_KEY`.
+  - Regular users must add personal provider keys in Profile.
+- ✅ New user management fields (migration)
+  - `is_test_user`, `rate_limit_quota`, `exempt_from_rate_limit`, `plan`.
+- ✅ Users API enhancements (admin-only where noted)
+  - GET `/api/users`: list with filters and pagination; returns
+    `remaining_quota`.
+  - PUT `/api/users/{id}`: admin may update role/test/quota/exempt/plan or
+    provider keys; non-admin may update own name/email.
+  - Admin action: `{ action: "reset_quota" }` to clear recent usage.
+- ✅ Rate limiting
+  - `request_logs` table for per-user 24h sliding window counts.
+  - Utility `checkAndConsume` with transaction to avoid races.
+  - Applied to `/api/ai` and `/api/ai/stream` with 429, `Retry-After`, and
+    `X-RateLimit-Remaining` headers.
+- ✅ Admin UI
+  - `app/admin/layout.tsx` with admin guard.
+  - `app/admin/users/page.tsx` list + inline edits and Remaining column.
+- ✅ Reliability and safety
+  - Absolute paths in `knexfile.js` and inline ESM db config for app code.
+  - `scripts/backup-db.ts` with rotation (keep latest only).
+
+Notes
+- Counting is per user; using server keys for test users does not affect
+  quotas of other users.
+- Default quota is 50 req/24h unless overridden; `exempt_from_rate_limit`
+  bypasses limits.
+
+### Locked Until Starter Feature (October 2025)
+- ✅ **Completed**: "Locked until starter" feature for new journal entries
+- ✅ **Completed**: Editor lock mechanism using CodeMirror `Compartment` for `EditorView.editable`
+- ✅ **Completed**: Starter widget integration with "Continue as is" and template selection
+- ✅ **Completed**: Conditional placeholder rendering ("Start writing here..." when unlocked and empty)
+- ✅ **Completed**: Preview mode toggle (Alt+P) with Vim cursor position preservation
+- ✅ **Completed**: MarkdownContent styling for code blocks and inline code
+- ✅ **Completed**: State management for `starterDismissed` across new entries
+- ✅ **Completed**: Auto-unlock when templates are applied via `'replace-current-content'` event
+- ✅ **Completed**: React lifecycle fixes for CodeMirror widget destruction
+- 🔄 **Enhanced**: `CMEditor` component with `locked` and `focusTick` props
+- 🔄 **Enhanced**: `isBlankDraft` logic to handle "Untitled" default titles
+- 🔄 **Enhanced**: Global keyboard shortcuts with editor focus management
+- 📝 **Note**: Complete starter workflow with proper state synchronization between React and CodeMirror

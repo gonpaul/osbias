@@ -1,7 +1,8 @@
 'use client';
 import Link from 'next/link';
 import { 
-  FaSignOutAlt 
+  FaSignOutAlt,
+  FaUsersCog
 } from 'react-icons/fa';
 // import { sessionUtils } from '@/lib/session';
 import { GoPencil } from "react-icons/go";
@@ -22,7 +23,7 @@ const navigation = [
   // { name: 'Mental models', href: '/mental-models', icon: GiProcessor},
   // { name: 'Graph view', href: '/graph-view', icon: PiGraphLight},
   // { name: 'Belief system', href: '/belief-system', icon: BiSolidPyramid},
-  { name: 'Goals', href: '/goal-action', icon: GiMountainRoad},
+  // { name: 'Goals', href: '/goal-action', icon: GiMountainRoad},
 ];
 
 export default function Sidebar() {
@@ -73,6 +74,21 @@ export default function Sidebar() {
             </Link>
           );
         })}
+        {user?.role === 'admin' && (
+          <Link
+            href="/admin/users"
+            className={`flex items-center group-hover:w-fit group-hover:space-x-8 px-4 group-hover:px-4 py-4 rounded-lg transition-all duration-300 ${
+              pathname === '/admin/users'
+                ? 'bg-(--natural-gray)/40 text-white'
+                : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+            }`}
+          >
+            <FaUsersCog className="w-10 h-10 flex-shrink-0" />
+            <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
+              Users
+            </span>
+          </Link>
+        )}
       </nav>
       
       <div className="absolute bottom-6 left-0 right-0 px-4 group-hover:px-2">

@@ -58,10 +58,6 @@ const ValidationHistory: React.FC<ValidationHistoryProps> = ({ className = '', f
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedEntries, setExpandedEntries] = useState<Set<number>>(new Set());
 
-  useEffect(() => {
-    fetchValidationHistory();
-  }, [filePath, entryId]);
-
   const fetchValidationHistory = async () => {
     try {
       setLoading(true);
@@ -98,6 +94,11 @@ const ValidationHistory: React.FC<ValidationHistoryProps> = ({ className = '', f
     }
   };
 
+  useEffect(() => {
+    fetchValidationHistory();
+  }, [filePath, entryId]);
+
+
   const handleSearch = async () => {
     try {
       setLoading(true);
@@ -105,8 +106,8 @@ const ValidationHistory: React.FC<ValidationHistoryProps> = ({ className = '', f
       if (searchTerm) qs.set('search', searchTerm);
       if (entryId) qs.set('entry_id', String(entryId));
       else if (filePath) qs.set('file_path', filePath);
-      let url = `/api/validation-history${qs.toString() ? `?${qs.toString()}` : ''}`;
-      let response = await fetch(url, {
+      const url = `/api/validation-history${qs.toString() ? `?${qs.toString()}` : ''}`;
+      const response = await fetch(url, {
         credentials: 'include'
       });
       

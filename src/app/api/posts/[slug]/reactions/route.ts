@@ -5,10 +5,11 @@ import db from '@/lib/db';
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   return handleAuthz(async () => {
-    const post = await db('posts').where({ slug: params.slug }).first();
+    const { slug } = await params;
+    const post = await db('posts').where({ slug }).first();
     if (!post) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     const postId = post.id as number;
     const counts = await getReactionCounts([postId]);
@@ -19,11 +20,12 @@ export async function GET(
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   return handleAuthz(async () => {
     const user = await requireAuth(req);
-    const post = await db('posts').where({ slug: params.slug }).first();
+    const { slug } = await params;
+    const post = await db('posts').where({ slug }).first();
     if (!post) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     const postId = post.id as number;
     const { reaction } = await req.json();

@@ -1,5 +1,8 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getAI, type ProviderName } from '@/lib/services/ai';
+import { getUserFromRequest } from '@/lib/auth';
+import { resolveApiKeyForUser } from '@/lib/ai/keys';
+import { checkAndConsume } from '@/lib/rateLimit';
 
 /**
  * @swagger
@@ -68,15 +71,36 @@ import { getAI, type ProviderName } from '@/lib/services/ai';
  *                   type: string
  */
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     const { provider = 'openai', model, prompt, system, maxTokens } = await req.json();
     if (!prompt || typeof prompt !== 'string') {
       return NextResponse.json({ error: 'Missing prompt' }, { status: 400 });
     }
-    const ai = getAI((provider as ProviderName) ?? 'openai');
+    const user = await getUserFromRequest(req);
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const rl = await checkAndConsume(user);
+    if (!rl.allowed) {
+      const headers: Record<string, string> = {
+        'Retry-After': Math.ceil((rl.retryAfterMs || 0) / 1000).toString(),
+        'X-RateLimit-Limit': 'user',
+        'X-RateLimit-Remaining': '0',
+      };
+      return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429, headers });
+    }
+
+    const key = resolveApiKeyForUser(user, (provider as ProviderName) ?? 'openai');
+    if (!key) {
+      return NextResponse.json(
+        { error: 'No API key configured. Add your provider key in Profile.' },
+        { status: 402 }
+      );
+    }
+
+    const ai = getAI((provider as ProviderName) ?? 'openai', key);
     const text = await ai.complete({ prompt, system, maxTokens, model });
-    return NextResponse.json({ text });
+    return NextResponse.json({ text }, { headers: { 'X-RateLimit-Remaining': String(rl.remaining) } });
   } catch (err: unknown) {
     return NextResponse.json({ error: err instanceof Error ? err.message : 'Server error' }, { status: 500 });
   }

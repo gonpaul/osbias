@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 import { requireAuth, assertOwner, handleAuthz } from "@/lib/authz";
 import { 
   getJournalEntries,
@@ -125,13 +126,20 @@ export async function POST(req: NextRequest) {
   return handleAuthz(async () => {
     const authUser = await requireAuth(req);
     const body = await req.json();
-    const { user_id, framework_id, title, content, is_template = false, tags } = body;
+    const { user_id, framework_id } = body;
+    const rawTitle = typeof body.title === 'string' ? body.title : '';
+    const rawContent = typeof body.content === 'string' ? body.content : '';
+    const is_template = body.is_template ?? false;
+    const tags = body.tags;
 
     const ownerId = user_id ?? authUser.id;
     assertOwner(authUser, ownerId);
-    if (!ownerId || !title || !content) {
+    if (!ownerId) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
+
+    const title = (rawTitle || '').trim() || 'Untitled';
+    const content = rawContent; // allow empty string for blank drafts
 
     const newEntry = await createJournalEntry({
       user_id: ownerId,

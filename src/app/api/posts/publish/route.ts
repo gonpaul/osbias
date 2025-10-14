@@ -8,6 +8,9 @@ import { rateLimitOk, rateLimitRemaining } from "@/lib/rateLimit";
 export async function POST(req: NextRequest) {
   return handleAuthz(async () => {
     const user = await requireAuth(req);
+    if (!user.allow_posting) {
+      return NextResponse.json({ error: "Posting not allowed" }, { status: 403 });
+    }
 
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "ip:unknown";
     const key = `publish:${user.id}:${ip}`;

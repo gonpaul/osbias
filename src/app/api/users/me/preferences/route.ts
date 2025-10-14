@@ -18,7 +18,7 @@ import { getUserFromRequest } from "@/lib/auth";
 export async function GET(req: NextRequest) {
   const user = await getUserFromRequest(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const prefs = user.preferences ? JSON.parse(user.preferences as any) : {};
+  const prefs = user.preferences ? JSON.parse(user.preferences) : {};
   return NextResponse.json(prefs);
 }
 

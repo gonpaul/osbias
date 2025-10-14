@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
+import type { AppDispatch } from "@/lib/redux/store";
 import { fetchMe } from "@/lib/redux/slices/authSlice";
 
 export default function RegisterPage() {
@@ -11,7 +12,7 @@ export default function RegisterPage() {
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
 
   useEffect(() => {
     (async () => {
@@ -37,7 +38,7 @@ export default function RegisterPage() {
       setLoading(false);
       return;
     }
-    await dispatch<any>(fetchMe());
+    await dispatch(fetchMe());
     router.push("/");
   }
 

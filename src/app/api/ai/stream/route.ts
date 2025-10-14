@@ -1,5 +1,8 @@
 import { NextRequest } from 'next/server';
 import { getAI, type ProviderName } from '@/lib/services/ai';
+import { getUserFromRequest } from '@/lib/auth';
+import { resolveApiKeyForUser } from '@/lib/ai/keys';
+import { checkAndConsume } from '@/lib/rateLimit';
 
 export const runtime = 'nodejs';
 
@@ -9,7 +12,23 @@ export async function POST(req: NextRequest) {
     return new Response('Missing prompt', { status: 400 });
   }
 
-  const ai = getAI((provider as ProviderName) ?? 'openai');
+  const user = await getUserFromRequest(req);
+  if (!user) return new Response('Unauthorized', { status: 401 });
+
+  const rl = await checkAndConsume(user);
+  if (!rl.allowed) {
+    const headers = new Headers();
+    headers.set('Retry-After', Math.ceil((rl.retryAfterMs || 0) / 1000).toString());
+    headers.set('X-RateLimit-Limit', 'user');
+    headers.set('X-RateLimit-Remaining', '0');
+    return new Response(JSON.stringify({ error: 'Rate limit exceeded' }), {
+      status: 429,
+      headers,
+    });
+  }
+  const key = resolveApiKeyForUser(user, (provider as ProviderName) ?? 'openai');
+  if (!key) return new Response('No API key configured', { status: 402 });
+  const ai = getAI((provider as ProviderName) ?? 'openai', key);
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -36,7 +55,8 @@ export async function POST(req: NextRequest) {
       'Content-Type': 'text/event-stream; charset=utf-8',
       'Cache-Control': 'no-cache, no-transform',
       'Connection': 'keep-alive',
-      'X-Accel-Buffering': 'no'
+      'X-Accel-Buffering': 'no',
+      'X-RateLimit-Remaining': String(rl.remaining),
     }
   });
 }

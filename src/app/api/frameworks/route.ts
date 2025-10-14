@@ -147,7 +147,10 @@ export async function POST(req: NextRequest) {
   return handleAuthz(async () => {
     const authUser = await requireAuth(req);
     const body = await req.json();
-    let { user_id, name, description, concepts, is_system = false } = body;
+    // eslint-disable-next-line prefer-const
+    let { user_id, name, description, concepts, is_system = false } = body as {
+      user_id?: number | null; name?: string; description?: string; concepts?: string[]; is_system?: boolean
+    };
 
     if (!name || !description || !concepts) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -185,9 +188,10 @@ export async function POST(req: NextRequest) {
       };
 
       return NextResponse.json(frameworkWithParsedConcepts, { status: 201 });
-    } catch (err: any) {
-      const msg = String(err?.message || "");
-      const code = String((err && (err as any).code) || "");
+    } catch (err: unknown) {
+      const anyErr = err as { message?: string; code?: string } | undefined;
+      const msg = String(anyErr?.message || "");
+      const code = String(anyErr?.code || "");
       if (code.includes("SQLITE_CONSTRAINT") || msg.toUpperCase().includes("UNIQUE") || msg.toUpperCase().includes("CONSTRAINT")) {
         return NextResponse.json({ error: "Framework name already exists for this scope" }, { status: 409 });
       }

@@ -10,7 +10,8 @@ export function parseUserAIPreferences(preferencesJson: string | null): UserAIPr
     const prefs = JSON.parse(preferencesJson);
     return {
       provider: prefs.aiProvider || DEFAULT_AI_PREFERENCES.provider,
-      model: prefs.aiModel || DEFAULT_AI_PREFERENCES.model
+      model: prefs.aiModel || DEFAULT_AI_PREFERENCES.model,
+      maxTokens: typeof prefs.maxTokens === 'number' ? prefs.maxTokens : DEFAULT_AI_PREFERENCES.maxTokens
     };
   } catch {
     return DEFAULT_AI_PREFERENCES;
@@ -33,6 +34,7 @@ export function mergeAIPreferences(
   return JSON.stringify({
     ...existing,
     aiProvider: aiPrefs.provider,
-    aiModel: aiPrefs.model
+    aiModel: aiPrefs.model,
+    maxTokens: aiPrefs.maxTokens
   });
 }

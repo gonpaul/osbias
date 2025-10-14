@@ -119,9 +119,9 @@ export async function PUT(
     } else {
       assertOwner(authUser, existing.user_id as number);
     }
-    const body = await req.json();
+    const body: Partial<{ name: string; description: string; concepts: string[] }> = await req.json();
     const { name, description, concepts } = body;
-    const updates: any = {};
+    const updates: Partial<{ name: string; description: string; concepts: string }> = {};
     if (name) updates.name = name;
     if (description) updates.description = description;
     if (concepts && Array.isArray(concepts)) {

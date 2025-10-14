@@ -4,6 +4,7 @@ import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { FaFolder, FaFolderOpen } from 'react-icons/fa';
 import { FaRegTrashAlt } from 'react-icons/fa';
 import { useDispatch, useSelector } from 'react-redux';
+import type { RootState } from '@/lib/redux/store';
 import { setEntries, setLoading, setError } from '@/lib/redux/slices/journalEntriesSlice';
 import type { JournalEntry } from '@/lib/redux/slices/journalEntriesSlice';
 import { setCurrent } from '@/lib/redux/slices/currentJournalSlice';
@@ -54,9 +55,9 @@ const FileSystem: React.FC<FileSystemProps> = ({
   const dispatch = useDispatch();
 
   // Use entries from Redux store
-  const entries = useSelector((state: any) => state.journalEntries.entries as JournalEntry[]);
-  const loading = useSelector((state: any) => state.journalEntries.loading as boolean);
-  const current = useSelector((state: any) => state.currentJournal.current as JournalEntry | null);
+  const entries = useSelector((state: RootState) => state.journalEntries.entries);
+  const loading = useSelector((state: RootState) => state.journalEntries.loading);
+  const current = useSelector((state: RootState) => state.currentJournal.current);
 
   useEffect(() => {
     let active = true;

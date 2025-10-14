@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth, assertOwner, handleAuthz } from "@/lib/authz";
+import { requireAuth, handleAuthz } from "@/lib/authz";
 import { getJournalEntryById, createJournalEntry } from "@/models/journal";
 
 /**
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
       content: template.content || '',
       is_template: false,
       tags: null,
-    } as any);
+    });
 
     return NextResponse.json(created, { status: 201 });
   });

@@ -5,9 +5,7 @@ import remarkGfm from 'remark-gfm';
 import rehypeSlug from 'rehype-slug';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 import rehypeHighlight from 'rehype-highlight';
-import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
-import { useMemo } from 'react';
-import Image from 'next/image';
+import rehypeSanitize from 'rehype-sanitize';
 
 export default function MarkdownContent({ content }: { content: string }) {
 //   const schema = useMemo(() => {
@@ -57,6 +55,31 @@ export default function MarkdownContent({ content }: { content: string }) {
         //   [rehypeSanitize, schema],
         ]}
         components={{
+          code({ inline, className, children, ...props }: { inline?: boolean; className?: string; children?: React.ReactNode }) {
+            const languageMatch = /language-([\w-]+)/.exec(className || '');
+            if (inline) {
+              return (
+                <code
+                  className={`not-prose inline-block w-fit align-middle whitespace-nowrap px-1.5 py-0.5 rounded bg-(--darkelbg) text-(--foreground) border border-(--secondary)/30 ${className || ''}`}
+                  style={{ display: 'inline-block', width: 'fit-content' }}
+                  {...props}
+                >
+                  {children}
+                </code>
+              );
+            }
+            return (
+              <pre className="my-5 rounded-lg bg-(--emphasis)/30 border border-(--secondary)/30 overflow-x-auto">
+                <code
+                  className={`${className || ''} block px-4 py-3 leading-relaxed whitespace-pre`}
+                  data-lang={languageMatch ? languageMatch[1] : undefined}
+                  {...props}
+                >
+                  {children}
+                </code>
+              </pre>
+            );
+          },
           h1: ({ ...props }) => (
             <h1 {...props} className="text-3xl font-bold mt-12 mb-6" />
           ),

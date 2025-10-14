@@ -1,4 +1,5 @@
 import swaggerJSDoc from 'swagger-jsdoc';
+import { getServerApiBase } from './config/api';
 
 const options = {
   definition: {
@@ -10,7 +11,7 @@ const options = {
     },
     servers: [
       {
-        url: 'http://localhost:3000/api',
+        url: getServerApiBase() + '/api',
         description: 'Development server',
       },
     ],

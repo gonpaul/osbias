@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import db from "@/lib/db";
 import { getReactionCounts } from "@/models/post";
+import { requireAuth } from "@/lib/authz";
 
 export async function GET(
   req: NextRequest,
@@ -35,6 +36,21 @@ export async function GET(
     updated_at: post.updated_at,
     reactions: counts.get(post.id) || { like: 0, dislike: 0 },
   });
+}
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ slug: string }> }
+) {
+  const user = await requireAuth(req);
+  const { slug } = await params;
+  const post = await db("posts").where({ slug }).first();
+  if (!post) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (post.author_id !== user.id && user.role !== "admin") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+  await db("posts").where({ id: post.id }).del();
+  return NextResponse.json({ ok: true });
 }
 
 

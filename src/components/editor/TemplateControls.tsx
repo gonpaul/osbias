@@ -45,8 +45,9 @@ export default function TemplateControls() {
       }
       setMsg('Saved');
       setTimeout(() => setMsg(null), 1500);
-    } catch (e: any) {
-      setMsg(e?.message || 'Failed');
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'Failed';
+      setMsg(message);
     } finally {
       setSaving(false);
     }

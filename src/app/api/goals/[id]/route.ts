@@ -3,7 +3,9 @@ import {
   getGoalWithActions,
   updateGoal,
   deleteGoal,
-  getGoalById
+  getGoalById,
+  type GoalStatus,
+  type UpdateGoal
 } from "../../../../models/life";
 import { requireAuth, assertOwner, handleAuthz } from "@/lib/authz";
 
@@ -109,13 +111,13 @@ export async function PUT(
       return NextResponse.json({ error: "Goal not found" }, { status: 404 });
     }
     assertOwner(authUser, existing.user_id as number);
-    const body = await req.json();
+    const body: Partial<{ title: string; description: string | null; status: GoalStatus; target_date: string | null }> = await req.json();
     const { title, description, status, target_date } = body;
-    const updates: any = {};
+    const updates: Partial<UpdateGoal> = {};
     if (title) updates.title = title;
     if (description !== undefined) updates.description = description;
     if (status) {
-      const validStatuses = ["planned", "active", "blocked", "done", "dropped"];
+      const validStatuses: GoalStatus[] = ["planned", "active", "blocked", "done", "dropped"];
       if (!validStatuses.includes(status)) {
         return NextResponse.json({ error: "Invalid status" }, { status: 400 });
       }

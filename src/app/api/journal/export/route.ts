@@ -42,8 +42,8 @@ export async function GET(req: NextRequest) {
         zip.file(filename, fileContent);
       }
 
-      const zipBuffer = await zip.generateAsync({ type: 'nodebuffer' });
-      return new NextResponse(zipBuffer, {
+      const zipArrayBuffer = await zip.generateAsync({ type: 'arraybuffer' });
+      return new NextResponse(zipArrayBuffer, {
         headers: {
           'Content-Type': 'application/zip',
           'Content-Disposition': `attachment; filename="journal_entries_${new Date().toISOString().split('T')[0]}.zip"`

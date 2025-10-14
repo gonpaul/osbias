@@ -107,9 +107,9 @@ export async function PUT(
       return NextResponse.json({ error: "Parent entry not found" }, { status: 404 });
     }
     assertOwner(authUser, entry.user_id as number);
-    const body = await req.json();
+    const body: Partial<{ framework_id: number | null; content: string; text_selection: string | null; file_path: string | null }> = await req.json();
     const { framework_id, content, text_selection, file_path } = body;
-    const updates: any = {};
+    const updates: Partial<{ framework_id: number | null; content: string; text_selection: string | null; file_path: string | null }> = {};
     if (framework_id !== undefined) updates.framework_id = framework_id;
     if (content) updates.content = content;
     if (text_selection !== undefined) updates.text_selection = text_selection;

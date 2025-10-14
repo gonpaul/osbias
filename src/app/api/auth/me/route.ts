@@ -18,5 +18,5 @@ import { getUserFromRequest } from "@/lib/auth";
 export async function GET(req: NextRequest) {
   const user = await getUserFromRequest(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  return NextResponse.json({ id: user.id, name: user.name, email: user.email, role: user.role });
+  return NextResponse.json({ id: user.id, name: user.name, email: user.email, role: user.role, allow_posting: user.allow_posting });
 }

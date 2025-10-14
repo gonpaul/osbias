@@ -8,6 +8,14 @@ export interface User extends WithID, Timestamps {
   password_hash: string;
   preferences?: string | null;
   role: 'user' | 'admin';
+  openai_api_key?: string | null;
+  anthropic_api_key?: string | null;
+  // New user management fields
+  is_test_user?: boolean;
+  rate_limit_quota?: number | null;
+  exempt_from_rate_limit?: boolean;
+  plan?: string | null;
+  allow_posting?: boolean;
 }
 
 export type NewUser = Insertable<User>;
@@ -23,7 +31,6 @@ export async function getUsers(): Promise<User[]> {
 export async function createUser(user: NewUserWithPassword): Promise<User> {
   const { password, ...rest } = user;
   if (!password) throw new Error("Password required");
-  const { hashPassword } = await import("../lib/auth");
   const password_hash = await hashPassword(password);
   const [id] = await db<User>("users").insert({ ...rest, password_hash, role: 'user' });
   const newUser = await db<User>("users").where({ id }).first();

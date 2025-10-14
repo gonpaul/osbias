@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth, assertOwner, handleAuthz } from "@/lib/authz";
+import { requireAuth, handleAuthz } from "@/lib/authz";
 import { 
   getFrameworkSteps, 
   createFrameworkStep, 
@@ -51,11 +51,12 @@ import {
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   return handleAuthz(async () => {
     await requireAuth(req);
-    const frameworkId = parseInt(params.id);
+    const { id } = await params;
+    const frameworkId = parseInt(id);
     
     if (isNaN(frameworkId)) {
       return NextResponse.json(
@@ -135,11 +136,12 @@ export async function GET(
  */
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   return handleAuthz(async () => {
     const authUser = await requireAuth(req);
-    const frameworkId = parseInt(params.id);
+    const { id } = await params;
+    const frameworkId = parseInt(id);
     
     if (isNaN(frameworkId)) {
       return NextResponse.json(
@@ -165,7 +167,7 @@ export async function POST(
       );
     }
 
-    const body = await req.json();
+    const body: Partial<{ step_order: number; title: string; description: string | null }> = await req.json();
     const { step_order, title, description } = body;
 
     if (!step_order || !title) {
@@ -191,9 +193,10 @@ export async function POST(
       });
 
       return NextResponse.json(newStep, { status: 201 });
-    } catch (err: any) {
-      const msg = String(err?.message || "");
-      const code = String((err && (err as any).code) || "");
+    } catch (err: unknown) {
+      const anyErr = err as { message?: string; code?: string } | undefined;
+      const msg = String(anyErr?.message || "");
+      const code = String(anyErr?.code || "");
       if (code.includes("SQLITE_CONSTRAINT") || msg.toUpperCase().includes("UNIQUE") || msg.toUpperCase().includes("CONSTRAINT")) {
         return NextResponse.json({ error: "Step order already exists for this framework" }, { status: 409 });
       }

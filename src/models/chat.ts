@@ -1,4 +1,5 @@
 import db from '@/lib/db';
+import { AuthError } from '@/lib/authz';
 
 export type ChatSession = {
   id: number;
@@ -33,7 +34,7 @@ export async function createChatSession(userId: number, name: string): Promise<C
 export async function getMessages(sessionId: number, userId: number): Promise<ChatMessage[]> {
   // Ensure session ownership
   const session = await db('chat_sessions').first('id').where({ id: sessionId, user_id: userId });
-  if (!session) throw new Error('Not found');
+  if (!session) throw new AuthError(404, 'Not found');
   return db('chat_messages')
     .select('*')
     .where({ session_id: sessionId })
@@ -42,7 +43,7 @@ export async function getMessages(sessionId: number, userId: number): Promise<Ch
 
 export async function addMessage(sessionId: number, userId: number, role: 'user' | 'assistant', content: string): Promise<ChatMessage> {
   const session = await db('chat_sessions').first('id').where({ id: sessionId, user_id: userId });
-  if (!session) throw new Error('Not found');
+  if (!session) throw new AuthError(404, 'Not found');
   const [row] = await db('chat_messages')
     .insert({ session_id: sessionId, role, content })
     .returning('*');

@@ -79,12 +79,13 @@ import {
  */
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string; stepId: string } }
+  { params }: { params: Promise<{ id: string; stepId: string }> }
 ) {
   return handleAuthz(async () => {
     const authUser = await requireAuth(req);
-    const frameworkId = parseInt(params.id);
-    const stepId = parseInt(params.stepId);
+    const { id, stepId: stepIdStr } = await params;
+    const frameworkId = parseInt(id);
+    const stepId = parseInt(stepIdStr);
     
     if (isNaN(frameworkId) || isNaN(stepId)) {
       return NextResponse.json(
@@ -144,9 +145,10 @@ export async function PUT(
       }
 
       return NextResponse.json(updatedStep);
-    } catch (err: any) {
-      const msg = String(err?.message || "");
-      const code = String((err && (err as any).code) || "");
+    } catch (err: unknown) {
+      const anyErr = err as { message?: string; code?: string } | undefined;
+      const msg = String(anyErr?.message || "");
+      const code = String(anyErr?.code || "");
       if (code.includes("SQLITE_CONSTRAINT") || msg.toUpperCase().includes("UNIQUE") || msg.toUpperCase().includes("CONSTRAINT")) {
         return NextResponse.json({ error: "Step order already exists for this framework" }, { status: 409 });
       }
@@ -197,12 +199,13 @@ export async function PUT(
  */
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string; stepId: string } }
+  { params }: { params: Promise<{ id: string; stepId: string }> }
 ) {
   return handleAuthz(async () => {
     const authUser = await requireAuth(req);
-    const frameworkId = parseInt(params.id);
-    const stepId = parseInt(params.stepId);
+    const { id, stepId: stepIdStr } = await params;
+    const frameworkId = parseInt(id);
+    const stepId = parseInt(stepIdStr);
     
     if (isNaN(frameworkId) || isNaN(stepId)) {
       return NextResponse.json(

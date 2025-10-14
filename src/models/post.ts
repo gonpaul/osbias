@@ -53,7 +53,8 @@ export async function getReactionCounts(postIds: number[]) {
     .groupBy('post_id', 'reaction')
     .select('reaction');
   const map = new Map<number, { like: number; dislike: number }>();
-  for (const r of rows as any[]) {
+  type ReactionRow = { post_id: number; cnt: string | number; reaction: 'like' | 'dislike' };
+  for (const r of rows as ReactionRow[]) {
     const cur = map.get(r.post_id) || { like: 0, dislike: 0 };
     if (r.reaction === 'like') cur.like = Number(r.cnt);
     if (r.reaction === 'dislike') cur.dislike = Number(r.cnt);

@@ -13,6 +13,6 @@ export function middleware(req: NextRequest) {
 export const config = {
   matcher: [
     // Protect all pages except these:
-    "/((?!api|_next/static|_next/image|favicon.ico|login|register).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|login|register|p).*)",
   ],
 };

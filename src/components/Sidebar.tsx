@@ -85,7 +85,7 @@ export default function Sidebar() {
           >
             <FaUsersCog className="w-10 h-10 flex-shrink-0" />
             <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
-              Users
+              Admin
             </span>
           </Link>
         )}

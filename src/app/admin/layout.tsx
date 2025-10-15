@@ -44,11 +44,12 @@ export default function AdminLayout({
   return (
     <div className="min-h-screen bg-(--background) text-(--foreground)">
       <header className="px-6 py-4 border-b border-(--secondary)/30 bg-(--darkelbg) sticky top-0 z-40">
-        <div className="max-w-[min(94vw,1400px)] mx-auto flex items-center justify-between">
+        <div className="max-w-[min(94vw,1400px)] mx-auto flex items-center justify-start gap-20">
           <h1 className="text-xl font-semibold">Admin</h1>
-          {/* <nav className="flex gap-4">
+          <nav className="flex gap-4">
             <Link className="px-3 py-2 rounded-md border border-(--secondary)/30 hover:border-(--golden)/50 transition-colors cursor-pointer" href="/admin/users">Users</Link>
-          </nav> */}
+            <Link className="px-3 py-2 rounded-md border border-(--secondary)/30 hover:border-(--golden)/50 transition-colors cursor-pointer" href="/admin/posts">Posts</Link>
+          </nav>
         </div>
       </header>
       <main className="px-4 md:px-[4vw] lg:px-[6vw] py-6 max-w-[min(94vw,1400px)] mx-auto">{children}</main>

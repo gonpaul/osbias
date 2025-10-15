@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, handleAuthz } from '@/lib/authz';
-import { addMessage, getMessages } from '@/models/chat';
+import { addMessage, getMessages, deleteMessages } from '@/models/chat';
 
 export async function GET(
   req: NextRequest,
@@ -38,4 +38,20 @@ export async function POST(
   });
 }
 
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  return handleAuthz(async () => {
+    const user = await requireAuth(req);
+    const { id } = await params;
+    const sessionId = Number(id);
+    if (!Number.isFinite(sessionId)) {
+      return NextResponse.json({ error: 'Invalid session id' }, { status: 400 });
+    }
+    await deleteMessages(sessionId, user.id);
+    return new NextResponse(null, { status: 204 });
+  });
+}
 

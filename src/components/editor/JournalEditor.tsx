@@ -2087,7 +2087,7 @@ export default function JournalEditor() {
   const showStarterInline = isBlankDraft && !starterDismissed;
 
   return (
-    <div className="flex flex-col h-full w-full px-6" tabIndex={-1}>
+    <div className="flex flex-col h-full w-full px-6 relative" tabIndex={-1}>
       <div className="flex items-center gap-2 py-4">
         <button
           className={`cursor-pointer px-3 py-1 rounded text-sm flex items-center gap-2

@@ -51,3 +51,19 @@ export async function addMessage(sessionId: number, userId: number, role: 'user'
 }
 
 
+export async function deleteMessages(sessionId: number, userId: number): Promise<number> {
+  const session = await db('chat_sessions').first('id').where({ id: sessionId, user_id: userId });
+  if (!session) throw new AuthError(404, 'Not found');
+  const deleted = await db('chat_messages').where({ session_id: sessionId }).del();
+  return deleted;
+}
+
+
+export async function deleteChatSession(sessionId: number, userId: number): Promise<boolean> {
+  const session = await db('chat_sessions').first('id').where({ id: sessionId, user_id: userId });
+  if (!session) throw new AuthError(404, 'Not found');
+  const deleted = await db('chat_sessions').where({ id: sessionId, user_id: userId }).del();
+  return deleted > 0;
+}
+
+

@@ -9,4 +9,5 @@ export type PostAnswer = {
   reactions?: { like: number; dislike: number };
   author: Author;
   created_at: string;
+  mine?: null | 'like' | 'dislike';
 };

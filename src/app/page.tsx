@@ -151,7 +151,7 @@ export default function Home() {
       >
         <FileSystem width="mx-auto w-120"></FileSystem>
         <div id="editor-div" className="flex flex-col bg-(--darkelbg) h-full rounded-t-2xl w-full">
-          <div className="flex flex-row rounded-md items-center-safe my-4 py-6 px-10 w-full sticky -top-0 z-20 bg-(--darkelbg) bg-opacity-90 backdrop-blur-sm shadow-[12px_8px_16px_4px_rgba(0,0,0,0.11)]">
+          <div className="flex flex-row rounded-3xl items-center-safe my-4 py-6 px-10 w-full sticky -top-0 z-20 bg-(--darkelbg) bg-opacity-90 backdrop-blur-sm shadow-[16px_8px_24px_4px_rgba(0,0,0,0.11)]">
             <div className="flex-1 ps-24 flex items-center">
               <button
                 className="cursor-pointer me-4 px-6 py-2 rounded-2xl bg-(--secondary)/20 hover:bg-(--dark) hover:opacity-80 transition-colors duration-300"

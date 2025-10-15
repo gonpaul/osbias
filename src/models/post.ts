@@ -67,6 +67,9 @@ export async function setReaction(postId: number, userId: number, reaction: 'lik
   const existing = await db('post_reactions').where({ post_id: postId, user_id: userId }).first();
   if (!existing) {
     await db('post_reactions').insert({ post_id: postId, user_id: userId, reaction });
+  } else if (existing.reaction === reaction) {
+    // Toggle off if the same reaction is sent again
+    await db('post_reactions').where({ id: existing.id }).delete();
   } else {
     await db('post_reactions').where({ id: existing.id }).update({ reaction });
   }
@@ -77,6 +80,19 @@ export async function setReaction(postId: number, userId: number, reaction: 'lik
 export async function getUserReaction(postId: number, userId: number) {
   const row = await db('post_reactions').where({ post_id: postId, user_id: userId }).first();
   return row ? (row.reaction as 'like' | 'dislike') : null;
+}
+
+export async function getUserReactions(postIds: number[], userId: number) {
+  if (postIds.length === 0) return new Map<number, null | 'like' | 'dislike'>();
+  const rows = await db('post_reactions')
+    .select('post_id', 'reaction')
+    .whereIn('post_id', postIds)
+    .andWhere({ user_id: userId });
+  const map = new Map<number, null | 'like' | 'dislike'>();
+  for (const r of rows as { post_id: number; reaction: 'like' | 'dislike' }[]) {
+    map.set(r.post_id, r.reaction);
+  }
+  return map;
 }
 
 

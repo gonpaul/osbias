@@ -18,6 +18,7 @@ type Props = {
   author: Author;
   created_at: string;
   currentUserId?: number;
+  mine?: null | 'like' | 'dislike';
 };
 
 export default function PostCard({
@@ -29,6 +30,7 @@ export default function PostCard({
   author,
   created_at,
   currentUserId,
+  mine: initialMine,
 }: Props) {
   const router = useRouter();
   const date = new Date(created_at).toLocaleDateString();
@@ -42,7 +44,7 @@ export default function PostCard({
   const displayed = hasMore ? `${short} …` : short;
   const [likeCount, setLikeCount] = useState(reactions?.like ?? 0);
   const [dislikeCount, setDislikeCount] = useState(reactions?.dislike ?? 0);
-  const [mine, setMine] = useState<null | 'like' | 'dislike'>(null);
+  const [mine, setMine] = useState<null | 'like' | 'dislike'>(initialMine ?? null);
   const [voting, setVoting] = useState(false);
   const fullScore = likeCount - dislikeCount;
   const displayScore = (() => {
@@ -53,6 +55,61 @@ export default function PostCard({
   })();
 
   const sendReaction = async (reaction: 'like' | 'dislike') => {
+    if (!currentUserId) return; // ignore when not logged in
+    if (voting) return;
+    const prevMine = mine;
+    const prevLike = likeCount;
+    const prevDislike = dislikeCount;
+
+    // Toggle off if clicking the same reaction again
+    if (prevMine === reaction) {
+      if (!currentUserId) return;
+      const prevLike = likeCount;
+      const prevDislike = dislikeCount;
+      const newLike = reaction === 'like' ? Math.max(0, prevLike - 1) : prevLike;
+      const newDislike = reaction === 'dislike' ? Math.max(0, prevDislike - 1) : prevDislike;
+      setMine(null);
+      setLikeCount(newLike);
+      setDislikeCount(newDislike);
+      try {
+        setVoting(true);
+        const res = await fetch(`/api/posts/${slug}/reactions`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ reaction })
+        });
+        if (!res.ok) {
+          // revert on failure
+          setMine(prevMine);
+          setLikeCount(prevLike);
+          setDislikeCount(prevDislike);
+          return;
+        }
+        const data = await res.json();
+        if (typeof data.like === 'number') setLikeCount(data.like);
+        if (typeof data.dislike === 'number') setDislikeCount(data.dislike);
+        if (data.mine === 'like' || data.mine === 'dislike' || data.mine === null) setMine(data.mine);
+      } finally {
+        setVoting(false);
+      }
+      return;
+    }
+
+    // Apply optimistic change
+    let nextLike = prevLike;
+    let nextDislike = prevDislike;
+    if (reaction === 'like') {
+      nextLike += 1;
+      if (prevMine === 'dislike') nextDislike -= 1;
+    } else {
+      nextDislike += 1;
+      if (prevMine === 'like') nextLike -= 1;
+    }
+    setMine(reaction);
+    setLikeCount(nextLike);
+    setDislikeCount(nextDislike);
+
     try {
       setVoting(true);
       const res = await fetch(`/api/posts/${slug}/reactions`, {
@@ -61,7 +118,13 @@ export default function PostCard({
         credentials: 'include',
         body: JSON.stringify({ reaction })
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        // revert
+        setMine(prevMine);
+        setLikeCount(prevLike);
+        setDislikeCount(prevDislike);
+        return;
+      }
       const data = await res.json();
       if (typeof data.like === 'number') setLikeCount(data.like);
       if (typeof data.dislike === 'number') setDislikeCount(data.dislike);
@@ -86,7 +149,7 @@ export default function PostCard({
   };
   return (
     <article
-      className="relative py-6 px-16 rounded-xl border-1 border-(--golden)/30 bg-(--darkelbg) pb-10 max-w-[600px] max-h-[800px] shadow-sm hover:shadow-(--golden)/10 transition-shadow"
+      className="relative py-6 px-16 rounded-xl border-1 border-(--golden)/30 bg-(--darkelbg) pb-10 min-w-[300px] w-full max-w-[600px] max-h-[800px] shadow-sm hover:shadow-(--golden)/10 transition-shadow"
     >
       <div className="absolute right-6 top-4 flex items-center gap-3">
         {canDelete && (

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import db from "@/lib/db";
-import { getReactionCounts } from "@/models/post";
+import { getReactionCounts, getUserReactions } from "@/models/post";
+import { getUserFromRequest } from "@/lib/auth";
 import { makeExcerpt } from "@/lib/text";
 
 interface PostRow {
@@ -61,7 +62,17 @@ export async function GET(req: NextRequest) {
   const authorMap = new Map<number, { id: number; name: string | null }>();
   for (const a of authors) authorMap.set(a.id, { id: a.id, name: a.name || null });
 
-  let items;
+  let items: Array<{
+    id: number;
+    slug: string;
+    title: string;
+    excerpt: string;
+    content: string;
+    author: { id: number; name: string | null };
+    created_at: string;
+    reactions: { like: number; dislike: number };
+    mine?: null | 'like' | 'dislike';
+  }>;
   if (sort === "recent") {
     // For recent sorting, we need to get reaction counts
     const countsMap = await getReactionCounts(rows.map((r: PostRow) => r.id));
@@ -87,6 +98,18 @@ export async function GET(req: NextRequest) {
       created_at: r.created_at,
       reactions: r.reactions,
     }));
+  }
+
+  // Optionally include the current user's reaction per post
+  try {
+    const authUser = await getUserFromRequest(req);
+    if (authUser) {
+      const postIds = items.map((i) => i.id);
+      const mineMap = await getUserReactions(postIds, authUser.id as number);
+      items = items.map((i) => ({ ...i, mine: mineMap.get(i.id) ?? null }));
+    }
+  } catch {
+    // ignore auth failures for public feed
   }
 
   return NextResponse.json({ page, page_size: pageSize, items });

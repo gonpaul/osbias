@@ -44,7 +44,7 @@ const RightBar: React.FC<RightBarProps> = ({ className = '' }) => {
   };
 
   return (
-    <div className={`flex flex-col mt-10 w-full mx-auto items-center bg-(--background) sticky top-10 self-start ${className}`}>
+    <div className={`flex flex-col w-full mx-auto items-center bg-(--background) sticky top-10 self-start ${className}`}>
       {/* <div className="flex flex-row justify-center w-full">
         {options.map((button, idx) => {
           const IconComponent = button.icon;

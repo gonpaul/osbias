@@ -209,6 +209,47 @@ Modern, stylish, dark blue
 
 # Testing
 
+Below are common Playwright workflows.
+
+- Install Playwright (browsers and deps):
+
+```bash
+npm i -D @playwright/test
+npx playwright install --with-deps
+```
+
+- Run the starter test headless:
+
+```bash
+npx playwright test tests/e2e/starter.spec.ts
+```
+
+- Run by test title:
+
+```bash
+npx playwright test -g "starter shows on first visit"
+```
+
+- Generate and open HTML report:
+
+```bash
+npx playwright test --reporter=list,html
+npx playwright show-report
+```
+
+- Capture and open a trace:
+
+```bash
+npx playwright test tests/e2e/starter.spec.ts --trace on
+npx playwright show-trace test-results/<failed-dir>/trace.zip
+```
+
+- UI mode on headless servers (Xvfb):
+
+```bash
+xvfb-run -a npx playwright test --ui
+```
+
 # Deployment. Launch
 
 # Support

@@ -5,6 +5,7 @@ export type UIEventName =
   | 'open-framework-templates'
   | 'hello-widget-request'
   | 'blank-entry-opened'
+  | 'starter-widget-closed'
   | 'request-current-entry'
   | 'current-entry-response'
   | 'insert-text-at-cursor'
@@ -31,6 +32,7 @@ type PayloadMap = {
   'open-framework-templates': undefined;
   'hello-widget-request': undefined;
   'blank-entry-opened': undefined;
+  'starter-widget-closed': undefined;
   'request-current-entry': undefined;
   'current-entry-response': { id: number | null; title: string; content: string };
   'insert-text-at-cursor': { text: string };

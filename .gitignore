@@ -43,3 +43,5 @@ next-env.d.ts
 # db
 *.sqlite3
 backups/dev.sqlite3.bak.*
+test-results
+playwright-report

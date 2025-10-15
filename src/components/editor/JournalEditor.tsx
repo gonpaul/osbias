@@ -1766,7 +1766,10 @@ export default function JournalEditor() {
   const [focusTick, setFocusTick] = useState(0);
   // Dismiss starter inline panel for current blank draft
   const [starterDismissed, setStarterDismissed] = useState(false);
+  const [starterVisible, setStarterVisible] = useState(false);
   
+  // Seed a blank draft for brand-new users (no entries yet)
+
   // Validation history state
   const [showHistory, setShowHistory] = useState(false);
   // Publish info bridge: respond with current entry details for modal
@@ -1792,6 +1795,7 @@ export default function JournalEditor() {
       emitUIEvent('blank-entry-opened');
       // Also trigger the hello widget for new entries
       emitUIEvent('hello-widget-request');
+      setStarterVisible(true);
       announcedBlankRef.current = true;
     }
     if (!current || current.id !== -1) {
@@ -1805,10 +1809,36 @@ export default function JournalEditor() {
       // Small delay to ensure the editor is ready
       const timer = setTimeout(() => {
         emitUIEvent('hello-widget-request');
+        setStarterVisible(true);
       }, 100);
       return () => clearTimeout(timer);
     }
   }, [current]);
+
+  // Welcome page: if user has no entries and no current entry, still show hello chooser
+  useEffect(() => {
+    if (!current && entries.length === 0) {
+      const isTitleBlank = (title || '').trim().length === 0 || (title || '').trim().toLowerCase() === 'untitled';
+      const isContentBlank = (content || '').trim().length === 0;
+      if (isTitleBlank && isContentBlank && !announcedBlankRef.current) {
+        const timer = setTimeout(() => {
+          emitUIEvent('hello-widget-request');
+          setStarterVisible(true);
+          announcedBlankRef.current = true;
+        }, 100);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [current, entries.length, title, content]);
+
+  // Observe starter close events from the HelloWidget
+  useEffect(() => {
+    const off = onUIEvent('starter-widget-closed', () => {
+      setStarterVisible(false);
+      setStarterDismissed(true);
+    });
+    return () => off();
+  }, []);
   
   // Reset starter dismissed state when switching to a new entry
   useEffect(() => {
@@ -2081,10 +2111,17 @@ export default function JournalEditor() {
     return () => window.removeEventListener('keydown', onGlobalKey, true);
   }, [dispatch, preview]);
 
-  const isBlankDraft = !!current && 
-    (title.trim().length === 0 || title.trim().toLowerCase() === 'untitled') && 
-    (content.trim().length === 0);
+  const isBlankDraft = (
+    (!!current &&
+      ((title || '').trim().length === 0 || (title || '').trim().toLowerCase() === 'untitled') &&
+      ((content || '').trim().length === 0))
+    || (!current && entries.length === 0 &&
+      ((title || '').trim().length === 0 || (title || '').trim().toLowerCase() === 'untitled') &&
+      ((content || '').trim().length === 0))
+  );
   const showStarterInline = isBlankDraft && !starterDismissed;
+  // Treat starter as active while it's visible regardless of title/content changes
+  const isStarterActive = starterVisible && !starterDismissed;
 
   return (
     <div className="flex flex-col h-full w-full px-6 relative" tabIndex={-1}>
@@ -2166,7 +2203,7 @@ export default function JournalEditor() {
           console.log('- showStarterInline:', showStarterInline);
           return false;
         })()}
-        {(!content || content.trim().length === 0) && !showStarterInline && (
+        {(!content || content.trim().length === 0) && !isStarterActive && (
           <div className="pointer-events-none absolute top-2 left-4 text-(--secondary) text-md opacity-60 select-none">
             Start writing here...
           </div>

@@ -147,84 +147,86 @@ export default function Home() {
     {/* <div className="font-sans grid grid-rows-[1fr_20px] items-center justify-items-center min-h-screen me-8 py-10"> */}
     <div className="font-sans max-h-screen overflow-y-auto pt-10">
       <main
-        className="grid grid-cols-[280px_1fr_340px] h-full w-full rounded-t-2xl items-start"
+        className="grid grid-cols-[340px_1fr_340px] h-full w-full rounded-t-2xl items-start"
       >
         <FileSystem width="mx-auto w-120"></FileSystem>
-        <div id="editor-div" className="flex flex-col bg-(--darkelbg) h-full rounded-t-2xl w-full">
-          <div className="flex flex-row rounded-3xl items-center-safe my-4 py-6 px-10 w-full sticky -top-0 z-20 bg-(--darkelbg) bg-opacity-90 backdrop-blur-sm shadow-[16px_8px_24px_4px_rgba(0,0,0,0.11)]">
-            <div className="flex-1 ps-24 flex items-center">
-              <button
-                className="cursor-pointer me-4 px-6 py-2 rounded-2xl bg-(--secondary)/20 hover:bg-(--dark) hover:opacity-80 transition-colors duration-300"
-                title="Make a template"
-                onClick={() => setIsQuickMakeTemplateOpen(true)}
-              >
-                Make a template
-              </button>
+          <div id="editor-div" className="flex flex-col bg-(--darkelbg) h-full rounded-t-2xl w-full">
+            <div className="flex flex-row justify-between rounded-3xl items-center-safe my-4 pt-6 pb-8 px-30 w-full sticky -top-0 z-20 bg-(--darkelbg) bg-opacity-90 backdrop-blur-sm shadow-[16px_8px_24px_4px_rgba(0,0,0,0.11)]">
+              <div className="flex min-w-0 items-center justify-start flex-1">
+                <button
+                  className="cursor-pointer me-4 px-6 py-2 rounded-2xl bg-(--secondary)/20 hover:bg-(--dark) hover:opacity-80 transition-colors duration-300"
+                  title="Make a template"
+                  onClick={() => setIsQuickMakeTemplateOpen(true)}
+                >
+                  Make a template
+                </button>
+              </div>
+              <div className="flex flex-1 justify-center">
+                <ul className="flex flex-row rounded-xl bg-(--secondary)/20 overflow-hidden border-1 border-(--secondary) flex-shrink-0 divide-x divide-(--secondary)">
+                  <button
+                    onClick={handleTemplateClick}
+                    className="cursor-pointer pe-4 py-2 rounded-s-md bg-transparent hover:bg-(--dark) hover:opacity-80 transition-colors first:pl-10"
+                    title="Templates"
+                  >
+                    <CgTemplate className="h-full w-10" />
+                  </button>
+                  <button
+                    className="cursor-pointer px-4 py-2 rounded bg-transparent hover:bg-(--dark) hover:opacity-80 transition-colors"
+                    title="Validate"
+                    onClick={() => {
+                      // Dispatch custom event to trigger idea validation
+                      emitUIEvent('idea-validation-request');
+                    }}
+                  >
+                    <GrValidate className="h-full w-10" />
+                  </button>
+                  <button
+                    className="cursor-pointer px-4 py-2 rounded bg-transparent hover:bg-(--dark) hover:opacity-80 transition-colors"
+                    title="Bias Check"
+                    onClick={() => {
+                      // Dispatch custom event to trigger bias checking
+                      emitUIEvent('bias-check-request');
+                    }}
+                  >
+                    Bias-check
+                  </button>
+                  <button
+                    className="cursor-pointer px-4 py-2 rounded bg-transparent hover:bg-(--dark) hover:opacity-80 transition-colors"
+                    title="Paraphrase"
+                    onClick={() => {
+                      // This will be handled by the JournalEditor component
+                      emitUIEvent('paraphrase-request');
+                    }}
+                  >
+                    Paraphrase
+                  </button>
+                  <button
+                    className="cursor-pointer px-4 py-2 rounded bg-transparent hover:bg-(--dark) hover:opacity-80 transition-colors rounded-e-md disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={allowPosting === false}
+                    title={allowPosting === false ? 'Posting not allowed' : undefined}
+                    onClick={() => {
+                      const off = onUIEvent('current-entry-response', (detail) => {
+                        setPublishData(detail);
+                        setIsPublishOpen(true);
+                        off();
+                      });
+                      emitUIEvent('request-current-entry');
+                    }}
+                  >
+                    Publish
+                  </button>
+                </ul>
+              </div>
+              <div className="flex flex-1 justify-end">
+                <button
+                  className="cursor-pointer p-4 bg-(--secondary)/20 hover:bg-(--dark) transition-colors duration-300 text-center rounded-full"
+                  title="Download"
+                  onClick={handleDownload}
+                >
+                  <FiDownload className="h-full w-10 hover:opacity-80 transition-opacity duration-300" />
+                </button>
+              </div>
             </div>
-            <ul className="flex flex-row rounded-xl bg-(--secondary)/20 overflow-hidden border-1 border-(--secondary) flex-shrink-0 divide-x divide-(--secondary)">
-            <button
-              onClick={handleTemplateClick}
-              className="cursor-pointer pe-4 py-2 rounded-s-md bg-transparent hover:bg-(--dark) hover:opacity-80 transition-colors first:pl-10"
-              title="Templates"
-            >
-              <CgTemplate className="h-full w-10"/>
-            </button>
-            <button
-              className="cursor-pointer px-4 py-2 rounded bg-transparent hover:bg-(--dark) hover:opacity-80 transition-colors"
-              title="Validate"
-              onClick={() => {
-                // Dispatch custom event to trigger idea validation
-                emitUIEvent('idea-validation-request');
-              }}
-            >
-              <GrValidate className="h-full w-10"/>
-            </button>
-            <button 
-              className="cursor-pointer px-4 py-2 rounded bg-transparent hover:bg-(--dark) hover:opacity-80 transition-colors"
-              title="Bias Check"
-              onClick={() => {
-                // Dispatch custom event to trigger bias checking
-                emitUIEvent('bias-check-request');
-              }}
-            >
-              Bias-check 
-            </button>
-            <button 
-              className="cursor-pointer px-4 py-2 rounded bg-transparent hover:bg-(--dark) hover:opacity-80 transition-colors"
-              title="Paraphrase"
-              onClick={() => {
-                // This will be handled by the JournalEditor component
-                emitUIEvent('paraphrase-request');
-              }}
-            >
-              Paraphrase
-            </button>
-            <button 
-              className="cursor-pointer px-4 py-2 rounded bg-transparent hover:bg-(--dark) hover:opacity-80 transition-colors rounded-e-md disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={allowPosting === false}
-              title={allowPosting === false ? 'Posting not allowed' : undefined}
-              onClick={() => {
-                  const off = onUIEvent('current-entry-response', (detail) => {
-                    setPublishData(detail);
-                    setIsPublishOpen(true);
-                    off();
-                  });
-                  emitUIEvent('request-current-entry');
-                }}
-              >
-                Publish
-              </button>
-            </ul>
-            <div className="flex-1 flex justify-end pe-20">
-              <button 
-                className="cursor-pointer p-4 bg-(--secondary)/20 hover:bg-(--dark) transition-colors duration-300 text-center rounded-full"
-                title="Download"
-                onClick={handleDownload}
-              >
-                <FiDownload className="h-full w-10 hover:opacity-80 transition-opacity duration-300"/>
-              </button>
-            </div>
-          </div>
           <div className="flex-1 w-4/5 2xl:w-400 pb-20 mx-auto flex flex-col items-start min-h-screen">
             <JournalEditor />
             {/* <TemplateControls /> */}

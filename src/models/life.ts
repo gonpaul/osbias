@@ -32,6 +32,7 @@ export type UpdateGoal = Updatable<Goal>;
 
 export interface Action extends WithID, CreatedAtOnly {
   goal_id: ID;
+  name?: string | null;
   description: string;
   completed: boolean;
   due_date: string | null; // DATE

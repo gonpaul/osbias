@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { 
   getActions,
-  createAction
+  createAction,
+  deleteAction,
+  updateAction,
+  type UpdateAction as UpdateActionType
 } from "../../../../../models/life";
 
 /**
@@ -119,18 +122,112 @@ export async function POST(
   const { id } = await params;
   const goalId = parseInt(id);
   const body = await req.json();
-  const { description, completed = false, due_date } = body;
+  const { name, description = '', completed = false, due_date } = body;
   
-  if (!description) {
+  if (!name) {
     return NextResponse.json({ error: "Missing required field: description" }, { status: 400 });
   }
   
   const newAction = await createAction({
     goal_id: goalId,
+    name,
     description,
     completed,
     due_date: due_date || null
   });
   
   return NextResponse.json(newAction, { status: 201 });
+}
+
+/**
+ * @swagger
+ * /goals/{id}/actions:
+ *   put:
+ *     summary: Update an action by ID for a goal
+ *     tags: [Actions]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Goal ID
+ *       - in: query
+ *         name: action_id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               description:
+ *                 type: string
+ *               completed:
+ *                 type: boolean
+ *               due_date:
+ *                 type: string
+ *                 format: date
+ *     responses:
+ *       200:
+ *         description: Action updated successfully
+ *       400:
+ *         description: Missing action_id
+ */
+export async function PUT(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const actionIdParam = searchParams.get("action_id");
+  if (!actionIdParam) {
+    return NextResponse.json({ error: "Missing action_id" }, { status: 400 });
+  }
+  const actionId = parseInt(actionIdParam);
+  const body: Partial<UpdateActionType> = await req.json();
+  const updated = await updateAction(actionId, body);
+  return NextResponse.json(updated);
+}
+
+/**
+ * @swagger
+ * /goals/{id}/actions:
+ *   delete:
+ *     summary: Delete an action by ID for a goal
+ *     tags: [Actions]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Goal ID
+ *       - in: query
+ *         name: action_id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Action ID to delete
+ *     responses:
+ *       204:
+ *         description: Action deleted successfully
+ *       400:
+ *         description: Missing action_id
+ *       404:
+ *         description: Action not found
+ */
+export async function DELETE(
+  req: NextRequest
+) {
+  const { searchParams } = new URL(req.url);
+  const actionIdParam = searchParams.get("action_id");
+  if (!actionIdParam) {
+    return NextResponse.json({ error: "Missing action_id" }, { status: 400 });
+  }
+  const actionId = parseInt(actionIdParam);
+  const deleted = await deleteAction(actionId);
+  if (!deleted) {
+    return NextResponse.json({ error: "Action not found" }, { status: 404 });
+  }
+  return new NextResponse(null, { status: 204 });
 }

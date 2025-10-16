@@ -289,7 +289,7 @@ const FileSystem: React.FC<FileSystemProps> = ({
   }, [searchTerm, fileSystemData]);
 
   return (
-    <div className={`${width} overflow-hidden mt-10 h-full bg-(--background) border-none flex flex-col ${className}`}>
+    <div className={`${width} overflow-hidden ml-30 mt-10 h-full bg-(--background) border-none flex flex-col ${className}`}>
       {/* Search Bar */}
       <div className="w-full p-4 border-b border-gray-200 dark:border-none">
         <div className="flex gap-1 w-full rounded-lg">

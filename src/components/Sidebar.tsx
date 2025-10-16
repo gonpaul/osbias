@@ -23,7 +23,7 @@ const navigation = [
   // { name: 'Mental models', href: '/mental-models', icon: GiProcessor},
   // { name: 'Graph view', href: '/graph-view', icon: PiGraphLight},
   // { name: 'Belief system', href: '/belief-system', icon: BiSolidPyramid},
-  // { name: 'Goals', href: '/goal-action', icon: GiMountainRoad},
+  { name: 'Goals', href: '/goals-system', icon: GiMountainRoad},
 ];
 
 export default function Sidebar() {
@@ -48,13 +48,13 @@ export default function Sidebar() {
 //   };
 
   return (
-    <div className="group bg-(--dark) w-30 hover:w-100 overflow-x-hidden h-screen sticky top-0 overflow-y-auto space-y-6 mt-0 pb-7 px-4 hover:px-7 transform -translate-x-full md:relative md:translate-x-0 transition-all duration-300 ease-in-out">
+    <div className="group bg-(--dark) absolute top-0 left-0 h-screen w-30 hover:w-100 overflow-x-hidden overflow-y-auto space-y-6 mt-0 pb-7 px-4 hover:px-7 transition-all duration-300 ease-in-out z-30">
       <div className="text-2xl font-semibold text-start ms-3 my-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
         Osbias 
         {/* Qualia */}
       </div>
       
-      <nav className="space-y-2 pe-4 border-r-(--secondary)/30 border-r-1">
+      <nav className="space-y-2 pe-4 border-r-(--secondary)/30 border-r-1 group-hover:border-r-0">
         {navigation.map((item) => {
           const isActive = pathname === item.href;
           return (

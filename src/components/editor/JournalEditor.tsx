@@ -1742,6 +1742,7 @@ export default function JournalEditor() {
   const dispatch = useDispatch();
   // Use journalEntries from Redux store
   const entries = useSelector((state: { journalEntries: { entries: JournalEntry[] } }) => state.journalEntries.entries);
+  const entriesLoading = useSelector((state: { journalEntries: { loading: boolean } }) => state.journalEntries.loading);
   // Use currentJournalSlice for current, title, content, saveState, preview
   const current = useSelector((state: { currentJournal: { current: JournalEntry | null } }) => state.currentJournal.current);
   const title = useSelector((state: { currentJournal: { title: string } }) => state.currentJournal.title);
@@ -1816,7 +1817,11 @@ export default function JournalEditor() {
   }, [current]);
 
   // Welcome page: if user has no entries and no current entry, still show hello chooser
+  // Wait for entries to finish loading before checking if we should show the starter
   useEffect(() => {
+    // Only proceed if loading is complete
+    if (entriesLoading) return;
+    
     if (!current && entries.length === 0) {
       const isTitleBlank = (title || '').trim().length === 0 || (title || '').trim().toLowerCase() === 'untitled';
       const isContentBlank = (content || '').trim().length === 0;
@@ -1829,7 +1834,7 @@ export default function JournalEditor() {
         return () => clearTimeout(timer);
       }
     }
-  }, [current, entries.length, title, content]);
+  }, [current, entries.length, entriesLoading, title, content]);
 
   // Observe starter close events from the HelloWidget
   useEffect(() => {

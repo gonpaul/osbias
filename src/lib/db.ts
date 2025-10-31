@@ -2,12 +2,13 @@ import knex from "knex";
 import path from "path";
 import fs from "fs";
 
-const dbPath = process.env.DB_PATH || path.join(process.cwd(), 'dev.sqlite3');
+const defaultName = process.env.NODE_ENV === 'production' ? 'db.sqlite3' : 'dev.sqlite3';
+const dbPath = process.env.DB_PATH || path.join(process.cwd(), defaultName);
 
 if (process.env.DB_PATH) {
   const dbDir = path.dirname(dbPath);
   if (!fs.existsSync(dbPath)) {
-    fs.mkdirSync(dbDir, { recursive: true })
+    fs.mkdirSync(dbDir, { recursive: true });
   }
 }
 

@@ -14,6 +14,11 @@ COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
+COPY --from=builder /app/db ./db
+COPY --from=builder /app/knexfile.js ./knexfile.js
+COPY --from=builder /app/docker/entrypoint.sh ./docker/entrypoint.sh
 RUN npm prune --omit=dev
+RUN chmod +x ./docker/entrypoint.sh
 EXPOSE 9002
-CMD ["sh", "-c", "PORT=9002 npm run start"]
+ENTRYPOINT ["sh", "./docker/entrypoint.sh"]
+CMD ["sh", "-lc", "PORT=9002 npm run start"]

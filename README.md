@@ -251,6 +251,19 @@ xvfb-run -a npx playwright test --ui
 ```
 
 # Deployment. Launch
+Create `osbias-db` volume for persistent storage across deployments:
+
+```bash
+docker volume create osbias-db
+```
+
+To list all volumes and see that the volume exists
+```bash
+docker volume ls
+
+# check this specific volume
+docker volume inspect osbias-db
+```
 
 Build the Docker image:
 
@@ -269,6 +282,22 @@ Stop and remove the container:
 ```bash
 docker stop osbias
 docker rm osbias
+```
+
+Develoment workflow:
+```bash
+docker build -t osbias:latest .
+docker rm -f osbias || true
+docker run -d \
+  --name osbias \
+  --restart unless-stopped \
+  -p 127.0.0.1:9002:9002 \
+  -v osbias-db:/app/data \
+  -e DB_PATH=/app/data/db.sqlite3 \
+  osbias:latest
+
+# Watch logs in real-time
+docker logs -f osbias
 ```
 
 # Support

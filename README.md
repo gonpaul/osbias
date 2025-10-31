@@ -159,7 +159,7 @@ It sits at the intersection of **AI, systems design, education, psychology, ling
     
 2. **Structured Journal** — editor with stages based on the chosen framework.
     
-3. **Basic Mental Model Suggestions** — static curated list for each framework stage.
+<!-- 3. **Basic Mental Model Suggestions** — static curated list for each framework stage. -->
     
 4. **Boilerplate Generation** — auto-fill obvious sections like problem restatement, definitions.
     

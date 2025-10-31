@@ -15,5 +15,5 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 RUN npm prune --omit=dev
-EXPOSE 3000
-CMD ["sh", "-c", "PORT=3000 npm run start"]
+EXPOSE 9002
+CMD ["sh", "-c", "PORT=9002 npm run start"]

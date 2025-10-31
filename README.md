@@ -252,6 +252,25 @@ xvfb-run -a npx playwright test --ui
 
 # Deployment. Launch
 
+Build the Docker image:
+
+```bash
+docker build -t osbias:latest .
+```
+
+Run the container:
+
+```bash
+docker run -d --name osbias -p 9002:9002 osbias:latest
+```
+
+Stop and remove the container:
+
+```bash
+docker stop osbias
+docker rm osbias
+```
+
 # Support
 
 

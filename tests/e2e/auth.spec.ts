@@ -9,7 +9,14 @@ test('register, logout, login', async ({ page }) => {
   await page.getByLabel('Name').fill('Test User');
   await page.getByLabel('Email').fill(email);
   await page.getByLabel('Password').fill(password);
-  await page.getByRole('button', { name: /create account/i }).click();
+  // await page.getByRole('button', { name: /create account/i }).click();
+  await Promise.all([
+  page.waitForResponse(
+    (r) => r.url().includes('/api/auth/register') && r.status() === 201,
+    { timeout: 30_000 },
+  ),
+  page.getByRole('button', { name: /create account/i }).click(),
+]);
 
   // Should land on home (authenticated)
   await expect(page).toHaveURL('/');

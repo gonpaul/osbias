@@ -19,6 +19,7 @@ export default function ProfilePage() {
   const [msg, setMsg] = useState("");
   const [openaiKey, setOpenaiKey] = useState("");
   const [anthropicKey, setAnthropicKey] = useState("");
+  const [openrouterKey, setOpenrouterKey] = useState("");
 
   useEffect(() => {
     (async () => {
@@ -53,7 +54,7 @@ export default function ProfilePage() {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
-      body: JSON.stringify({ name, email, openai_api_key: openaiKey || null, anthropic_api_key: anthropicKey || null }),
+      body: JSON.stringify({ name, email, openai_api_key: openaiKey || null, anthropic_api_key: anthropicKey || null, openrouter_api_key: openrouterKey || null }),
     });
     setMsg(res.ok ? "Profile saved" : "Failed to save profile");
   }
@@ -282,6 +283,19 @@ export default function ProfilePage() {
                     />
                     <span>Claude</span>
                   </label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="provider"
+                      value="openrouter"
+                      checked={aiPrefs.provider === 'openrouter'}
+                      onChange={() => {
+                        setAiPrefs({ ...aiPrefs, provider: 'openrouter', model: 'openrouter/auto' });
+                      }}
+                      className="text-[color:var(--emphasis)]"
+                    />
+                    <span>OpenRouter</span>
+                  </label>
                 </div>
               </label>
               <label className="flex flex-col gap-2">
@@ -341,6 +355,18 @@ export default function ProfilePage() {
                   value={anthropicKey}
                   onChange={e => setAnthropicKey(e.target.value)}
                   placeholder="anthropic-key..."
+                  autoComplete="off"
+                />
+                <span className="text-sm text-gray-500">Leave blank to keep unchanged. Enter null to remove.</span>
+              </label>
+              <label className="flex flex-col gap-2">
+                <span className="text-lg">OpenRouter API Key</span>
+                <input
+                  type="password"
+                  className="border border-gray-300 text-[clamp(1rem,0.95rem+0.3vw,1.125rem)] rounded-md px-3 py-2 bg-white text-[color:var(--secondary)] focus:outline-none focus:ring-2 focus:ring-emphasis"
+                  value={openrouterKey}
+                  onChange={e => setOpenrouterKey(e.target.value)}
+                  placeholder="sk-or-..."
                   autoComplete="off"
                 />
                 <span className="text-sm text-gray-500">Leave blank to keep unchanged. Enter null to remove.</span>

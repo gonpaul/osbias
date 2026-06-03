@@ -1,6 +1,6 @@
 import { test, expect, request as pwRequest, APIRequestContext } from '@playwright/test';
 
-const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
+const BASE_URL = process.env.BASE_URL || 'http://localhost:3001';
 const RUN_SUFFIX = `${Date.now()}`;
 
 async function api(ctx: APIRequestContext, method: 'GET'|'POST', path: string, body?: any) {

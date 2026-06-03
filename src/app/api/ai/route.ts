@@ -23,7 +23,7 @@ import { checkAndConsume } from '@/lib/rateLimit';
  *             properties:
  *               provider:
  *                 type: string
- *                 enum: [openai, claude]
+ *                 enum: [openai, claude, openrouter]
  *                 default: openai
  *                 description: The AI provider to use.
  *               model:

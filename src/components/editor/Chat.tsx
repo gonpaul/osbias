@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { FaHistory, FaPaperPlane, FaUser, FaRobot, FaTrash } from 'react-icons/fa';
 
 interface Message {
@@ -24,6 +24,24 @@ const Chat: React.FC<ChatProps> = ({ className = '' }) => {
   const [visibleSessionIds, setVisibleSessionIds] = useState<number[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<number | null>(null);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [userChatPrefs, setUserChatPrefs] = useState<{ provider: string; model: string; maxTokens: number } | null>(null);
+
+  // Load user AI preferences on mount
+  useEffect(() => {
+    (async () => {
+      try {
+        const p = await fetch("/api/users/me/preferences", { credentials: "include" });
+        if (p.ok) {
+          const prefs = await p.json();
+          setUserChatPrefs({
+            provider: prefs.aiProvider || 'openai',
+            model: prefs.aiModel || 'gpt-4o-mini',
+            maxTokens: prefs.aiMaxTokens || 512,
+          });
+        }
+      } catch {}
+    })();
+  }, []);
   // const tabs = ['General', 'Code', 'Debug'];
 
   const VISIBLE_KEY = 'chat_visible_session_ids';
@@ -234,11 +252,13 @@ const Chat: React.FC<ChatProps> = ({ className = '' }) => {
         const res = await fetch('/api/ai/stream', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({
             prompt: newMessage.content,
-            // optionally pass model/provider/system
-            sessionId,          // <— add this
-            maxTokens: 512,
+            provider: userChatPrefs?.provider,
+            model: userChatPrefs?.model,
+            sessionId,
+            maxTokens: userChatPrefs?.maxTokens || 512,
           }),
           signal: controllerRef.current.signal,
         });

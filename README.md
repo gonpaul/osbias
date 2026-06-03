@@ -1,38 +1,37 @@
-# Idea
-A **digital tool** (or suite of tools) that helps people become _better thinkers_ and _more intentional humans_ — by enabling them to:
+# Idea A **digital tool** (or suite of tools) that helps people become _better thinkers_ and _more intentional humans_ — by enabling them to:
 
 - Think more clearly
 
 - Challenge themselves via ai suggestions
-    
+
 - Solve meaningful problems
-    
+
 - Understand themselves and the world
-    
+
 - Make better decisions
-    
+
 - Overcome limiting beliefs
-    
+
 - Live purposefully
-    
+
 
 It sits at the intersection of **AI, systems design, education, psychology, linguistics**, and **philosophy of mind**.
 
-## 🔹 1. High-Level Functionality (MVP Scope)
+## 1. High-Level Functionality (MVP Scope)
 
 **Think of it as a mix between:**
 
 - **Roam Research** → Networked thought and idea development
-    
+
 - **Perplexity / Claude** → AI that helps answer and explore ideas deeply
-    
+
 - **Duolingo for the mind** → Micro challenges that build reasoning skills
-    
+
 - **Notion + Self-authoring** → A reflective and actionable life management system
-    
+
 - **A cognitive “gym” or coach** → To stretch and refine your thinking
 
-### 🧠 Feature Modules (first 3–6 months MVP)
+### Feature Modules (first 3–6 months MVP)
 
 |Module|Function|User Benefit|
 |---|---|---|
@@ -44,7 +43,7 @@ It sits at the intersection of **AI, systems design, education, psychology, ling
 |**Semantic Mapper / Linguistic Clarifier**|Helps translate vague or emotionally charged language into logical, precise ideas|Avoids miscommunication and thinking traps|
 
 ---
-    
+
 ## 🔹 2. Technical Design Overview
 
 |Layer|Details|
@@ -54,7 +53,7 @@ It sits at the intersection of **AI, systems design, education, psychology, ling
 |**AI/ML Layer**|OpenAI or Claude API + custom reasoning scaffolds / prompt engineering|
 |**Data Models**|Mental models, user goals, belief graphs, session memory|
 |**Interoperability**|Markdown export, knowledge graph, API for integrations (Obsidian, Notion)|
-|**Privacy / Data Ownership**|All data encrypted and owned by the user — no cloud lock-in|
+|**Privacy / Data Ownership**|All data owned by the user — no cloud lock-in|
 
 ---
 
@@ -98,13 +97,13 @@ It sits at the intersection of **AI, systems design, education, psychology, ling
 ## 🔹 6. Monetization Strategy (Post-MVP)
 
 - **Freemium**: Basic modules free, advanced modules (semantic mapping, belief debugger, AI-assisted reasoning) behind subscription
-    
+
 - **Premium**: $10–20/mo for deep thinkers, knowledge workers, coaches
-    
+
 - **Licensing**: Offer to schools, bootcamps, or corporate training
-    
+
 - **Open Core**: Some parts open-source (to gain trust and adoption), core modules proprietary
-    
+
 
 ---
 
@@ -112,28 +111,28 @@ It sits at the intersection of **AI, systems design, education, psychology, ling
 ## 🔹 7. Future Expansion
 
 - Integration with wearable data → _"Are you cognitively sharp today?"_
-    
+
 - GPT-backed agent that evolves with your thinking, not just your content
-    
+
 - Community “model gardens” → Share mental models with others
-    
+
 - Plugins for critical thinking games or dialectical sparring
-    
+
 - Multilingual / cross-cultural dialectics → aligned with your language skills
-    
+
 
 ---
 
 ## 🔹 Final Visualization (Your Ikigai in this Tool)
 
 - **You Love:** building systems, innovation, helping others think better
-    
+
 - **You’re Good At:** math, programming, systems design, linguistics
-    
+
 - **The World Needs:** better thinking, less confusion, rational action
-    
+
 - **You Can Be Paid For:** cognitive tools, coaching platforms, premium SaaS
-    
+
 
 ---
 
@@ -156,34 +155,34 @@ It sits at the intersection of **AI, systems design, education, psychology, ling
 **Core Features:**
 
 1. **Framework Library** — small set (3–5) of thinking frameworks (e.g., First Principles, OODA Loop, Inversion).
-    
+
 2. **Structured Journal** — editor with stages based on the chosen framework.
-    
+
 <!-- 3. **Basic Mental Model Suggestions** — static curated list for each framework stage. -->
-    
+
 4. **Boilerplate Generation** — auto-fill obvious sections like problem restatement, definitions.
-    
+
 5. **Session Save & Search** — users can revisit past reasoning sessions.
-    
+
 
 **Add-Ons in V1:**
 
 - Export sessions to Markdown/JSON.
-    
-- Simple dashboard showing “sessions completed this week.”
-    
 
-**Why This is Wholesome:**  
+- Simple dashboard showing “sessions completed this week.”
+
+
+**Why This is Wholesome:**
 Even at this stage, a user can pick a framework, think in a structured way, get nudged with models, and produce a clear, reusable reasoning document.
 
 
 ### Build order
 
-1. **Structured Journal Core** — framework stages in the editor.  
+1. **Structured Journal Core** — framework stages in the editor.
     _Reason:_ Without this, the app isn’t differentiated from a notes app. I could combine free form with framework steps to give more freedom to user, if additional comments/paragraphs needed
-    
+
 2. **Framework Library** — 3–5 curated thinking processes.
-    
+
 3. **Boilerplate Generation** — quick wins that make the first session feel magical.
 
 Use cases: definitions, paraphrasing, outlines, generic examples, brainstorm
@@ -193,9 +192,9 @@ Use cases: definitions, paraphrasing, outlines, generic examples, brainstorm
 A library of concepts, principles, patterns that could be internalized over time
 
 5. **Session Save & Search** — store & retrieve thinking artifacts.
-    
+
 6. **Basic Dashboard & Export** — small retention hook before V2.
-    
+
 
 **Ship Criteria:** User can structure thinking, get nudges, and export results.
 

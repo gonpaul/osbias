@@ -10,6 +10,7 @@ export interface User extends WithID, Timestamps {
   role: 'user' | 'admin';
   openai_api_key?: string | null;
   anthropic_api_key?: string | null;
+  openrouter_api_key?: string | null;
   // New user management fields
   is_test_user?: boolean;
   rate_limit_quota?: number | null;

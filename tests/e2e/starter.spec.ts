@@ -3,17 +3,31 @@ import { test, expect } from '@playwright/test';
 test.describe('Starter chooser and placeholder behavior', () => {
   test('starter shows on first visit, placeholder hidden until dismissed', async ({ page }) => {
     // Login first
-    await page.goto('/login');
-    await page.getByLabel('Email').fill('tu3@osbias.local');
-    await page.getByLabel('Password').fill('testuser3');
-    await page.getByRole('button', { name: /login/i }).click();
-    await expect(page).toHaveURL('');
+    // await page.goto('/login');
+    // await page.getByLabel('Email').fill('tu3@osbias.local');
+    // await page.getByLabel('Password').fill('testuser3');
+    // await page.getByRole('button', { name: /login/i }).click();
+    // await expect(page).toHaveURL('');
 
-    // Screenshot: initial state with starter visible
-    await page.screenshot({
-      path: 'test-results/starter-initial.png',
-      fullPage: true,
-    });
+    // // Screenshot: initial state with starter visible
+    // await page.screenshot({
+    //   path: 'test-results/starter-initial.png',
+    //   fullPage: true,
+    // });
+    const email = `starter${Date.now()}@example.com`;
+    const password = 'pass1234';
+    await page.goto('/register');
+    await page.getByLabel('Name').fill('Starter Test');
+    await page.getByLabel('Email').fill(email);
+    await page.getByLabel('Password').fill(password);
+    await Promise.all([
+      page.waitForResponse(
+        (r) => r.url().includes('/api/auth/register') && r.status() === 201,
+        { timeout: 30_000 },
+      ),
+      page.getByRole('button', { name: /create account/i }).click(),
+    ]);
+    await expect(page).toHaveURL('/', { timeout: 15_000 });
 
     // Expect hello/starter widget content to be visible (heading/button text from HelloWidget)
     await expect(page.getByText('Welcome to your new journal entry', { exact: false })).toBeVisible();

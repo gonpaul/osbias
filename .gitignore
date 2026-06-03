@@ -45,3 +45,4 @@ next-env.d.ts
 backups/dev.sqlite3.bak.*
 test-results
 playwright-report
+garbage/

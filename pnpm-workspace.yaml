@@ -1,0 +1,12 @@
+ignoredBuiltDependencies:
+  - '@parcel/watcher'
+  - '@scarf/scarf'
+  - '@swc/core'
+  - '@tailwindcss/oxide'
+  - '@tree-sitter-grammars/tree-sitter-yaml'
+  - better-sqlite3
+  - core-js-pure
+  - sharp
+  - tree-sitter
+  - tree-sitter-json
+  - unrs-resolver

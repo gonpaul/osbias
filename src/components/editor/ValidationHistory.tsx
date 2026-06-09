@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 
 interface ValidationHistoryEntry {
   id: number;
@@ -34,7 +35,6 @@ interface ValidationResult {
   recommendations: string[];
 }
 
-// Helper function to parse validation result from JSON string
 const parseValidationResult = (jsonString: string): ValidationResult => {
   try {
     return JSON.parse(jsonString) as ValidationResult;
@@ -52,6 +52,7 @@ const parseValidationResult = (jsonString: string): ValidationResult => {
 type ValidationHistoryProps = { className?: string; filePath?: string; entryId?: number };
 
 const ValidationHistory: React.FC<ValidationHistoryProps> = ({ className = '', filePath, entryId }) => {
+  const t = useTranslations('Editor');
   const [history, setHistory] = useState<ValidationHistoryEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -63,24 +64,20 @@ const ValidationHistory: React.FC<ValidationHistoryProps> = ({ className = '', f
       setLoading(true);
       const qs = new URLSearchParams();
       if (entryId) qs.set('entry_id', String(entryId));
-      // else if (filePath) qs.set('file_path', filePath);
-      // If we have an entry_id available from context in future, prefer it for precision
       const response = await fetch(`/api/validation-history${qs.toString() ? `?${qs.toString()}` : ''}`, {
         credentials: 'include'
       });
-      
+
       if (!response.ok) {
-        throw new Error('Failed to fetch validation history');
+        throw new Error(t('failedFetchHistory'));
       }
-      
+
       let data = await response.json();
       if (Array.isArray(data) && data.length === 0) {
-        // Try file_path if entry_id returned nothing
         if (entryId && filePath) {
           const alt = await fetch(`/api/validation-history?file_path=${encodeURIComponent(filePath)}`, { credentials: 'include' });
           if (alt.ok) data = await alt.json();
         }
-        // Last resort: show all user history
         if (Array.isArray(data) && data.length === 0 && (entryId || filePath)) {
           const all = await fetch(`/api/validation-history`, { credentials: 'include' });
           if (all.ok) data = await all.json();
@@ -88,7 +85,7 @@ const ValidationHistory: React.FC<ValidationHistoryProps> = ({ className = '', f
       }
       setHistory(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch validation history');
+      setError(err instanceof Error ? err.message : t('failedFetchHistory'));
     } finally {
       setLoading(false);
     }
@@ -98,7 +95,6 @@ const ValidationHistory: React.FC<ValidationHistoryProps> = ({ className = '', f
     fetchValidationHistory();
   }, [filePath, entryId]);
 
-
   const handleSearch = async () => {
     try {
       setLoading(true);
@@ -107,14 +103,12 @@ const ValidationHistory: React.FC<ValidationHistoryProps> = ({ className = '', f
       if (entryId) qs.set('entry_id', String(entryId));
       else if (filePath) qs.set('file_path', filePath);
       const url = `/api/validation-history${qs.toString() ? `?${qs.toString()}` : ''}`;
-      const response = await fetch(url, {
-        credentials: 'include'
-      });
-      
+      const response = await fetch(url, { credentials: 'include' });
+
       if (!response.ok) {
-        throw new Error('Failed to search validation history');
+        throw new Error(t('failedSearchHistory'));
       }
-      
+
       let data = await response.json();
       if (Array.isArray(data) && data.length === 0) {
         if (entryId && filePath) {
@@ -128,7 +122,7 @@ const ValidationHistory: React.FC<ValidationHistoryProps> = ({ className = '', f
       }
       setHistory(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to search validation history');
+      setError(err instanceof Error ? err.message : t('failedSearchHistory'));
     } finally {
       setLoading(false);
     }
@@ -150,14 +144,14 @@ const ValidationHistory: React.FC<ValidationHistoryProps> = ({ className = '', f
         method: 'DELETE',
         credentials: 'include'
       });
-      
+
       if (!response.ok) {
-        throw new Error('Failed to delete validation history entry');
+        throw new Error(t('failedDeleteHistory'));
       }
-      
+
       setHistory(history.filter(entry => entry.id !== id));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete entry');
+      setError(err instanceof Error ? err.message : t('failedDeleteEntry'));
     }
   };
 
@@ -173,10 +167,10 @@ const ValidationHistory: React.FC<ValidationHistoryProps> = ({ className = '', f
     return (
       <div className={`w-full h-full bg-(--background)/50 p-3 rounded-xl flex flex-col overflow-hidden ${className}`}>
         <div className="p-4 border-b border-(--secondary)/60">
-          <h2 className="text-lg font-semibold text-(--foreground) mb-3">Validation History</h2>
+          <h2 className="text-lg font-semibold text-(--foreground) mb-3">{t('validationHistory')}</h2>
         </div>
         <div className="flex-1 flex items-center justify-center">
-          <div className="text-(--secondary)">Loading...</div>
+          <div className="text-(--secondary)">{t('loading')}</div>
         </div>
       </div>
     );
@@ -186,18 +180,18 @@ const ValidationHistory: React.FC<ValidationHistoryProps> = ({ className = '', f
     return (
       <div className={`w-full h-full bg-(--background)/50 p-3 rounded-xl flex flex-col overflow-hidden ${className}`}>
         <div className="p-4 border-b border-(--secondary)/60">
-          <h2 className="text-lg font-semibold text-(--foreground) mb-3">Validation History</h2>
+          <h2 className="text-lg font-semibold text-(--foreground) mb-3">{t('validationHistory')}</h2>
         </div>
         <div className="flex-1 flex items-center justify-center">
           <div className="text-red-400 text-center">
-            <div className="mb-2">Error loading history</div>
+            <div className="mb-2">{t('errorLoadingHistory')}</div>
             <div className="text-sm text-(--secondary)">{error}</div>
-            <button 
-              onClick={fetchValidationHistory}
-              className="mt-2 px-3 py-1 bg-(--emphasis) text-white rounded text-sm hover:opacity-80"
-            >
-              Retry
-            </button>
+              <button
+                onClick={fetchValidationHistory}
+                className="mt-2 px-3 py-1 bg-(--emphasis) text-white rounded text-sm hover:opacity-80"
+              >
+                {t('retry')}
+              </button>
           </div>
         </div>
       </div>
@@ -206,15 +200,13 @@ const ValidationHistory: React.FC<ValidationHistoryProps> = ({ className = '', f
 
   return (
     <div className={`w-full h-full bg-(--background)/50 p-3 rounded-xl flex flex-col overflow-hidden ${className}`}>
-      {/* Header */}
       <div className="p-4 border-b border-(--secondary)/60">
-        <h2 className="text-lg font-semibold text-(--foreground) mb-3">Validation History</h2>
-        
-        {/* Search */}
+        <h2 className="text-lg font-semibold text-(--foreground) mb-3">{t('validationHistory')}</h2>
+
         <div className="flex gap-2">
           <input
             type="text"
-            placeholder="Search validations..."
+            placeholder={t('searchValidations')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
@@ -224,32 +216,30 @@ const ValidationHistory: React.FC<ValidationHistoryProps> = ({ className = '', f
             onClick={handleSearch}
             className="px-3 py-1 bg-(--emphasis) text-white rounded text-sm hover:opacity-80"
           >
-            Search
+            {t('search')}
           </button>
         </div>
       </div>
 
-      {/* History List */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {history.length === 0 ? (
           <div className="text-(--secondary) text-center py-8">
-            No validation history found
+            {t('noValidationHistory')}
           </div>
         ) : (
           history.map((entry) => {
             const validationResult = parseValidationResult(entry.validation_result);
             const isExpanded = expandedEntries.has(entry.id);
-            
+
             return (
               <div key={entry.id} className="border border-(--secondary)/40 rounded-lg p-4 bg-(--darkelbg) w-full">
-                {/* Entry Header */}
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex-1">
                     <div className="text-sm font-medium text-(--foreground) mb-1">
                       {formatDate(entry.created_at)}
                     </div>
                     <div className="text-xs text-(--secondary) mb-2">
-                      {entry.is_full_document ? 'Full Document' : 'Selected Text'} • 
+                      {entry.is_full_document ? t('fullDocument') : t('selectedText')} • 
                       {entry.ai_provider} • {entry.ai_model}
                     </div>
                     <div className="text-sm text-(--foreground) mb-2">
@@ -257,14 +247,14 @@ const ValidationHistory: React.FC<ValidationHistoryProps> = ({ className = '', f
                     </div>
                     <div className="flex items-center gap-2">
                       <span className={`text-xs font-bold px-2 py-1 rounded ${
-                        validationResult.overallValid 
-                          ? 'bg-green-900 text-green-300' 
+                        validationResult.overallValid
+                          ? 'bg-green-900 text-green-300'
                           : 'bg-red-900 text-red-300'
                       }`}>
-                        {validationResult.overallValid ? 'VALID' : 'INVALID'}
+                        {validationResult.overallValid ? t('valid') : t('invalid')}
                       </span>
                       <span className="text-xs text-(--secondary)">
-                        {validationResult.steps.length} steps
+                        {validationResult.steps.length} {t('steps')}
                       </span>
                     </div>
                   </div>
@@ -273,48 +263,45 @@ const ValidationHistory: React.FC<ValidationHistoryProps> = ({ className = '', f
                       onClick={() => toggleExpanded(entry.id)}
                       className="px-2 py-1 text-xs bg-(--secondary)/20 text-(--foreground) rounded hover:bg-(--secondary)/40"
                     >
-                      {isExpanded ? 'Collapse' : 'Expand'}
+                      {isExpanded ? t('collapse') : t('expand')}
                     </button>
                     <button
                       onClick={() => deleteEntry(entry.id)}
                       className="px-2 py-1 text-xs bg-red-900 text-red-300 rounded hover:bg-red-800"
                     >
-                      Delete
+                      {t('delete')}
                     </button>
                   </div>
                 </div>
 
-                {/* Expanded Details */}
                 {isExpanded && (
                   <div className="mt-3 space-y-3">
-                    {/* Original Text */}
                     <div>
-                      <div className="text-xs text-(--secondary) mb-1">Original Text:</div>
+                      <div className="text-xs text-(--secondary) mb-1">{t('originalText')}</div>
                       <div className="text-sm text-(--foreground) bg-(--background) p-2 rounded border border-(--secondary)">
                         {entry.original_text}
                       </div>
                     </div>
 
-                    {/* Validation Steps */}
                     <div>
-                      <div className="text-xs text-(--secondary) mb-2">Validation Steps:</div>
+                      <div className="text-xs text-(--secondary) mb-2">{t('validationSteps')}</div>
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                         {validationResult.steps.map((step, index) => (
                           <div key={step.id} className="border border-(--secondary)/40 rounded p-3 bg-(--background) w-full">
                             <div className="flex items-center justify-between mb-1">
                               <span className="text-sm font-medium text-(--foreground)">
-                                Step {index + 1}: {step.proposition}
+                                {t('step') + ' ' + (index + 1) + ': ' + step.proposition}
                               </span>
                               <span className={`text-xs font-bold px-2 py-1 rounded ${
-                                step.isValid 
-                                  ? 'bg-green-900 text-green-300' 
+                                step.isValid
+                                  ? 'bg-green-900 text-green-300'
                                   : 'bg-red-900 text-red-300'
                               }`}>
-                                {step.isValid ? 'VALID' : 'INVALID'}
+                                {step.isValid ? t('valid') : t('invalid')}
                               </span>
                             </div>
                             <div className="text-xs text-(--secondary) mb-1">
-                              Environment: {step.environment} • Confidence: {Math.round(step.confidence * 100)}%
+                              {t('environment') + ': ' + step.environment + ' • ' + t('confidence') + ': ' + Math.round(step.confidence * 100) + '%'}
                             </div>
                             <div className="text-sm text-(--foreground) bg-(--darkelbg) p-2 rounded">
                               {step.reasoning}
@@ -324,20 +311,18 @@ const ValidationHistory: React.FC<ValidationHistoryProps> = ({ className = '', f
                       </div>
                     </div>
 
-                    {/* Summary */}
                     {validationResult.summary && (
                       <div>
-                        <div className="text-xs text-(--secondary) mb-1">Summary:</div>
+                        <div className="text-xs text-(--secondary) mb-1">{t('summary')}</div>
                         <div className="text-sm text-(--foreground) bg-(--background) p-2 rounded border border-(--secondary)">
                           {validationResult.summary}
                         </div>
                       </div>
                     )}
 
-                    {/* Recommendations */}
                     {validationResult.recommendations.length > 0 && (
                       <div>
-                        <div className="text-xs text-(--secondary) mb-1">Recommendations:</div>
+                        <div className="text-xs text-(--secondary) mb-1">{t('recommendations')}</div>
                         <ul className="text-sm text-(--foreground) bg-(--background) p-2 rounded border border-(--secondary)">
                           {validationResult.recommendations.map((rec, index) => (
                             <li key={index} className="flex items-start gap-2">

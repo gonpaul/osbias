@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { emitUIEvent } from '@/lib/uiEvents';
 import { FaSearch } from 'react-icons/fa';
 
@@ -18,6 +19,7 @@ export default function JournalTemplatesModal({
   isOpen: boolean;
   onClose: () => void;
 }) {
+  const t = useTranslations('Editor');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [templates, setTemplates] = useState<TemplateEntry[]>([]);
@@ -38,12 +40,12 @@ export default function JournalTemplatesModal({
         const data = await res.json();
         setTemplates(data as TemplateEntry[]);
       } catch {
-        setError('Failed to load templates');
+        setError(t('loadError'));
       } finally {
         setLoading(false);
       }
     })();
-  }, [isOpen, search, tag]);
+  }, [isOpen, search, tag, t]);
 
   const parsedTagsById = useMemo(() => {
     const map = new Map<number, string[]>();
@@ -85,7 +87,7 @@ export default function JournalTemplatesModal({
         <div className="p-6 border-b border-(--secondary)/30">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-(--foreground)">Journal templates</h2>
+              <h2 className="text-2xl font-bold text-(--foreground)">{t('journalTemplates')}</h2>
             </div>
             <button
               onClick={onClose}
@@ -100,30 +102,30 @@ export default function JournalTemplatesModal({
               <input
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                placeholder="Search templates..."
+                placeholder={t('searchTemplates')}
                 className="w-full pl-16 pr-4 py-3 bg-(--background) border border-(--secondary)/30 rounded-lg text-(--foreground) placeholder-(--secondary) focus:outline-none focus:border-(--golden)"
               />
             </div>
             <input
               value={tag}
               onChange={e => setTag(e.target.value)}
-              placeholder="Tag filter"
+              placeholder={t('tagFilter')}
               className="px-4 py-3 bg-(--background) border border-(--secondary)/30 rounded-lg text-(--foreground) placeholder-(--secondary) focus:outline-none focus:border-(--golden)"
             />
           </div>
         </div>
         <div className="p-6 overflow-y-auto max-h-[70vh]">
           {loading ? (
-            <div className="text-(--secondary)">Loading…</div>
+            <div className="text-(--secondary)">{t('loading')}</div>
           ) : error ? (
             <div className="text-red-400">{error}</div>
           ) : templates.length === 0 ? (
-            <div className="text-(--secondary)">No templates found.</div>
+            <div className="text-(--secondary)">{t('noTemplates')}</div>
           ) : (
             <ul className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {templates.map(tpl => (
                 <li key={tpl.id} className="bg-(--background) rounded-lg border border-(--secondary)/30 hover:border-(--golden)/50 transition-all duration-300 hover:shadow-lg hover:shadow-(--golden)/10 p-6 flex flex-col gap-3">
-                  <div className="font-semibold text-(--foreground)">{tpl.title || 'Untitled template'}</div>
+                  <div className="font-semibold text-(--foreground)">{tpl.title || t('untitledTemplate')}</div>
                   <div className="text-(--secondary) text-sm line-clamp-3 whitespace-pre-wrap break-words flex-1">{tpl.content}</div>
                   <div className="flex flex-wrap gap-2">
                     {(parsedTagsById.get(tpl.id) || []).map((tg, i) => (
@@ -134,11 +136,11 @@ export default function JournalTemplatesModal({
                     <button
                       className="px-4 py-2 rounded-lg border border-(--secondary)/30 hover:border-(--golden)/50 text-(--foreground) transition-colors duration-300 cursor-pointer"
                       onClick={() => handleInsertAtCursor(tpl)}
-                    >Insert at cursor</button>
+                    >{t('insertAtCursor')}</button>
                     <button
                       className="px-4 py-2 rounded-lg bg-(--emphasis) text-white hover:bg-(--emphasis)/80 transition-colors duration-300 cursor-pointer"
                       onClick={() => handleReplaceContent(tpl)}
-                    >Replace content</button>
+                    >{t('replaceContent')}</button>
                   </div>
                 </li>
               ))}
@@ -149,5 +151,3 @@ export default function JournalTemplatesModal({
     </div>
   );
 }
-
-

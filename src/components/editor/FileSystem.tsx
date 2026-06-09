@@ -4,6 +4,7 @@ import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { FaFolder, FaFolderOpen } from 'react-icons/fa';
 import { FaRegTrashAlt } from 'react-icons/fa';
 import { useDispatch, useSelector } from 'react-redux';
+import { useTranslations } from 'next-intl';
 import type { RootState } from '@/lib/redux/store';
 import { setEntries, setLoading, setError } from '@/lib/redux/slices/journalEntriesSlice';
 import type { JournalEntry } from '@/lib/redux/slices/journalEntriesSlice';
@@ -26,12 +27,12 @@ interface FileSystemProps {
   className?: string;
 }
 
-function entriesToFileSystem(entries: JournalEntry[]): FileSystemItem[] {
+function entriesToFileSystem(entries: JournalEntry[], t: (key: string) => string): FileSystemItem[] {
   // Flat list of entries as files under a "Journal" folder
   return [
     {
       id: 'journal-root',
-      name: 'Journal',
+      name: t('journalRoot'),
       type: 'folder',
       path: '/journal',
       children: entries.map(entry => ({
@@ -49,6 +50,7 @@ const FileSystem: React.FC<FileSystemProps> = ({
   width = 'w-80',
   className = ''
 }) => {
+  const t = useTranslations('Editor');
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set(['journal-root']));
   const [hoveredFileId, setHoveredFileId] = useState<string | null>(null);
@@ -82,7 +84,10 @@ const FileSystem: React.FC<FileSystemProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch]);
 
-  const fileSystemData: FileSystemItem[] = useMemo(() => entriesToFileSystem(entries), [entries]);
+  const fileSystemData: FileSystemItem[] = useMemo(
+    () => entriesToFileSystem(entries, t),
+    [entries, t]
+  );
 
   const toggleFolder = (folderId: string) => {
     setExpandedFolders(prev => {
@@ -149,7 +154,7 @@ const FileSystem: React.FC<FileSystemProps> = ({
       id: -1,
       user_id: -1,
       framework_id: null,
-      title: 'Untitled',
+      title: t('untitled'),
       content: ''
     };
     dispatch(setCurrent(draft));
@@ -157,7 +162,7 @@ const FileSystem: React.FC<FileSystemProps> = ({
     try {
       window.dispatchEvent(new CustomEvent('blank-entry-opened'));
     } catch {}
-  }, [dispatch]);
+  }, [dispatch, t]);
 
   // Delete the current entry (if any)
   const deleteEntry = useCallback(async (id: ID) => {
@@ -236,7 +241,7 @@ const FileSystem: React.FC<FileSystemProps> = ({
                 e.stopPropagation();
                 if (item.entryId != null) deleteEntry(item.entryId);
               }}
-              title="Delete"
+              title={t('deleteTitle')}
               role="button"
               tabIndex={-1}
               style={{
@@ -295,7 +300,7 @@ const FileSystem: React.FC<FileSystemProps> = ({
         <div className="flex gap-1 w-full rounded-lg">
           <input
             type="text"
-            placeholder="Search files..."
+            placeholder={t('searchPlaceholder')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="flex-1 min-w-0 px-3 py-2 text-sm border-none rounded-xs dark:bg-(--darkelbg) text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:border-transparent"
@@ -304,7 +309,7 @@ const FileSystem: React.FC<FileSystemProps> = ({
             onClick={handleSearch}
             className="flex-shrink-0 cursor-pointer px-4 py-2 bg-gray-700 hover:bg-gray-800 text-white text-sm rounded-xs transition-colors duration-200 focus:outline-none focus:ring-offset-2"
           >
-            Search
+            {t('searchButton')}
           </button>
         </div>
       </div>
@@ -315,7 +320,7 @@ const FileSystem: React.FC<FileSystemProps> = ({
           className="cursor-pointer px-3 py-1 rounded bg-(--emphasis) text-white text-sm hover:opacity-80"
           onClick={createNew}
         >
-          New
+          {t('newButton')}
         </button>
       </div>
 
@@ -323,7 +328,7 @@ const FileSystem: React.FC<FileSystemProps> = ({
       <div className="flex-1 overflow-y-auto p-2 w-full">
         {loading ? (
           <div className="text-center text-gray-500 dark:text-gray-400 py-8">
-            Loading...
+            {t('loading')}
           </div>
         ) : filteredData.length > 0 ? (
           <div className="space-y-1 w-full">
@@ -331,7 +336,7 @@ const FileSystem: React.FC<FileSystemProps> = ({
           </div>
         ) : (
           <div className="text-center text-gray-500 dark:text-gray-400 py-8">
-            {searchTerm ? 'No files found' : 'No files available'}
+            {searchTerm ? t('noFilesFound') : t('noFilesAvailable')}
           </div>
         )}
       </div>

@@ -12,6 +12,7 @@ import { keymap, drawSelection, Decoration, WidgetType, DecorationSet } from "@c
 import { history, historyKeymap } from "@codemirror/commands";
 import { defaultKeymap } from "@codemirror/commands";
 import { useSelector, useDispatch } from 'react-redux';
+import { useTranslations } from 'next-intl';
 import type { JournalEntry } from '@/lib/redux/slices/journalEntriesSlice';
 import { setEntries, updateEntry } from '@/lib/redux/slices/journalEntriesSlice';
 import { getModelsByProvider } from "@/lib/config/ai-models";
@@ -38,6 +39,7 @@ function CMEditor({
   locked = false,
   onUnlock,
   focusTick,
+  t,
 }: {
   value: string;
   onChange: (val: string) => void;
@@ -46,6 +48,7 @@ function CMEditor({
   locked?: boolean;
   onUnlock?: () => void;
   focusTick?: number;
+  t: (key: string) => string;
 }) {
   const editorRef = useRef<HTMLDivElement | null>(null);
   const viewRef = useRef<EditorView | null>(null);
@@ -225,6 +228,7 @@ function CMEditor({
               }).range(this.insertPos);
               this.view.dispatch({ effects: [clearPopups.of(null), addPopup.of(deco)] });
             }}
+            t={t}
           />
         );
         return container;
@@ -521,7 +525,7 @@ function CMEditor({
           
           return (
             <div className="flex flex-col gap-3">
-              <div className="text-xs text-gray-400 mb-1">Bias Analysis:</div>
+              <div className="text-xs text-gray-400 mb-1">{t('biasAnalysis')}</div>
               <div className="flex items-center gap-3">
                 <div 
                   className="w-15 h-15 rounded-full flex items-center justify-center text-white font-bold text-sm"
@@ -531,15 +535,15 @@ function CMEditor({
                 </div>
                 <div className="flex-1">
                   <div className="text-sm font-medium">
-                    Bias Score: {(validBiasScore * 100).toFixed(1)}%
+                  {`Bias Score: ${(validBiasScore * 100).toFixed(1)}%`}
                   </div>
                   <div className="text-xs text-gray-400">
-                    {validBiasScore < 0.3 ? 'Low Bias' : validBiasScore < 0.7 ? 'Moderate Bias' : 'High Bias'}
+                  {validBiasScore < 0.3 ? t('lowBias') : validBiasScore < 0.7 ? t('moderateBias') : t('highBias')}
                   </div>
                 </div>
               </div>
               <div className="text-sm whitespace-pre-wrap break-words bg-gray-800 p-2 rounded">
-                <div className="text-xs text-gray-400 mb-1">Explanation:</div>
+                <div className="text-xs text-gray-400 mb-1">{t('explanation')}</div>
                 {this.biasExplanation}
               </div>
               <div className="flex gap-2 justify-end">
@@ -552,7 +556,7 @@ function CMEditor({
                     Promise.resolve().then(() => this.view.focus());
                   }}
                 >
-                  Close
+                  {t('close')}
                 </button>
               </div>
             </div>
@@ -627,7 +631,7 @@ function CMEditor({
         const ParaphraseResult = () => {
           return (
             <div className="flex flex-col gap-3">
-              <div className="text-xs text-gray-400 mb-1">Paraphrased:</div>
+              <div className="text-xs text-gray-400 mb-1">{t('paraphrased')}</div>
               <div className="text-sm whitespace-pre-wrap break-words bg-gray-800 p-2 rounded">
                 {this.paraphrasedText}
               </div>
@@ -637,7 +641,6 @@ function CMEditor({
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    // Replace the original text with paraphrased text
                     const tr = this.view.state.update({
                       changes: { 
                         from: this.selectionFrom, 
@@ -651,7 +654,7 @@ function CMEditor({
                     Promise.resolve().then(() => this.view.focus());
                   }}
                 >
-                  Accept
+                  {t('accept')}
                 </button>
                 <button
                   className="px-3 py-1 rounded bg-(--darkelbg) text-(--foreground) text-sm hover:opacity-80"
@@ -662,7 +665,7 @@ function CMEditor({
                     Promise.resolve().then(() => this.view.focus());
                   }}
                 >
-                  Reject
+                  {t('reject')}
                 </button>
               </div>
             </div>
@@ -751,37 +754,37 @@ function CMEditor({
         const ValidationResult = () => {
           const validSteps = this.validationResult.steps.filter(step => step.isValid).length;
           const totalSteps = this.validationResult.steps.length;
-          const overallStatus = this.validationResult.overallValid ? 'VALID' : 'INVALID';
+          const overallStatus = this.validationResult.overallValid ? t('valid') : t('invalid');
           const statusColor = this.validationResult.overallValid ? 'text-green-400' : 'text-red-400';
-          
+
           return (
             <div className="flex flex-col gap-4">
-              <div className="text-xs text-gray-400 mb-1">Idea Validation Results:</div>
-              
+              <div className="text-xs text-gray-400 mb-1">{t('ideaValidationResults')}</div>
+
               {/* Overall Status */}
               <div className="flex items-center gap-3 p-3 bg-gray-800 rounded">
                 <div className={`text-lg font-bold ${statusColor}`}>
                   {overallStatus}
                 </div>
                 <div className="text-sm text-gray-300">
-                  ({validSteps}/{totalSteps} propositions valid)
+                  {`${validSteps}/${totalSteps} propositions valid`}
                 </div>
               </div>
 
               {/* Validation Chain */}
               <div className="space-y-3">
-                <div className="text-sm font-medium text-gray-300">Validation Chain:</div>
+                <div className="text-sm font-medium text-gray-300">{t('validationChain')}</div>
                 {this.validationResult.steps.map((step, index) => {
-                  const stepStatus = step.isValid ? 'VALID' : 'INVALID';
+                  const stepStatus = step.isValid ? t('valid') : t('invalid');
                   const stepColor = step.isValid ? 'text-green-400' : 'text-red-400';
-                  const confidenceColor = step.confidence > 0.7 ? 'text-green-400' : 
+                  const confidenceColor = step.confidence > 0.7 ? 'text-green-400' :
                                         step.confidence > 0.4 ? 'text-yellow-400' : 'text-red-400';
-                  
+
                   return (
                     <div key={step.id} className="border border-gray-600 rounded p-3 bg-gray-800">
                       <div className="flex items-center justify-between mb-2">
                         <div className="text-sm font-medium text-gray-200">
-                          Step {index + 1}: {step.proposition}
+                          {t('step') + ' ' + (index + 1) + ': ' + step.proposition}
                         </div>
                         <div className="flex items-center gap-2 whitespace-nowrap">
                           <span className={`text-xs font-bold ${stepColor}`}>
@@ -792,19 +795,19 @@ function CMEditor({
                           </span>
                         </div>
                       </div>
-                      
+
                       <div className="text-xs text-gray-400 mb-1">
-                        Environment: {step.environment}
+                        {t('environment') + ': ' + step.environment}
                       </div>
-                      
+
                       <div className="text-sm text-gray-300 bg-gray-700 p-2 rounded">
-                        <div className="text-xs text-gray-400 mb-1">Reasoning:</div>
+                        <div className="text-xs text-gray-400 mb-1">{t('reasoning') + ':'}</div>
                         {step.reasoning}
                       </div>
-                      
+
                       {step.dependencies.length > 0 && (
                         <div className="text-xs text-gray-400 mt-2">
-                          Dependencies: {step.dependencies.join(', ')}
+                          {t('dependencies') + ': ' + step.dependencies.join(', ')}
                         </div>
                       )}
                     </div>
@@ -815,7 +818,7 @@ function CMEditor({
               {/* Summary */}
               {this.validationResult.summary && (
                 <div className="bg-gray-800 p-3 rounded">
-                  <div className="text-sm font-medium text-gray-300 mb-2">Summary:</div>
+                  <div className="text-sm font-medium text-gray-300 mb-2">{t('summary') + ':'}</div>
                   <div className="text-sm text-gray-300">{this.validationResult.summary}</div>
                 </div>
               )}
@@ -823,7 +826,7 @@ function CMEditor({
               {/* Recommendations */}
               {this.validationResult.recommendations.length > 0 && (
                 <div className="bg-gray-800 p-3 rounded">
-                  <div className="text-sm font-medium text-gray-300 mb-2">Recommendations:</div>
+                  <div className="text-sm font-medium text-gray-300 mb-2">{t('recommendations') + ':'}</div>
                   <ul className="text-sm text-gray-300 space-y-1">
                     {this.validationResult.recommendations.map((rec, index) => (
                       <li key={index} className="flex items-start gap-2">
@@ -843,7 +846,7 @@ function CMEditor({
                     Promise.resolve().then(() => this.view.focus());
                   }}
                 >
-                  Close
+                  {t('close')}
                 </button>
               </div>
             </div>
@@ -921,12 +924,11 @@ function CMEditor({
           return (
             <div className="flex flex-col w-9/10 items-center mx-auto py-6 my-4 bg-(--darkelbg) gap-6">
               <div className="text-xl max-w-2xl text-gray-300 text-center">
-                <TypewriterText text="Welcome to your new journal entry. Choose a template to get started or continue with a blank page." />
+                <TypewriterText text={t('welcomeEntry')} />
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-4xl">
-                {/* Journal Templates Card */}
-                <div 
+                <div
                   className="cursor-pointer rounded-lg border border-(--secondary)/30 hover:border-(--golden)/50 bg-(--background) p-6 transition-all duration-300 hover:shadow-lg hover:scale-105"
                   onClick={() => {
                     emitUIEvent('open-journal-templates');
@@ -936,15 +938,14 @@ function CMEditor({
                 >
                   <div className="text-center pb-6 pt-3">
                     <div className="text-2xl mb-3">📝</div>
-                    <div className="text-lg font-semibold text-white mb-2">Journal Template</div>
+                    <div className="text-lg font-semibold text-white mb-2">{t('journalTemplate')}</div>
                     <div className="text-sm text-gray-400">
-                      Start with a pre-made journal template with prompts and structure
+                      {t('journalTemplateDesc')}
                     </div>
                   </div>
                 </div>
 
-                {/* Framework Templates Card */}
-                <div 
+                <div
                   className="cursor-pointer rounded-lg border border-(--secondary)/30 hover:border-(--golden)/50 bg-(--background) p-6 transition-all duration-300 hover:shadow-lg hover:scale-105"
                   onClick={() => {
                     emitUIEvent('open-framework-templates');
@@ -954,9 +955,9 @@ function CMEditor({
                 >
                   <div className="text-center pb-6 pt-3">
                     <div className="text-2xl mb-3">🧠</div>
-                    <div className="text-lg font-semibold text-white mb-2">Framework Template</div>
+                    <div className="text-lg font-semibold text-white mb-2">{t('frameworkTemplate')}</div>
                     <div className="text-sm text-gray-400">
-                      Apply a thinking framework with structured steps and methodology
+                      {t('frameworkTemplateDesc')}
                     </div>
                   </div>
                 </div>
@@ -971,7 +972,7 @@ function CMEditor({
                     if (this.onUnlock) this.onUnlock();
                   }}
                 >
-                  Continue Blank
+                  {t('continueBlank')}
                 </button>
               </div>
             </div>
@@ -1011,7 +1012,7 @@ function CMEditor({
               div.style.borderRadius = '8px';
               div.style.background = 'var(--background)';
               div.style.maxWidth = '95%';
-              div.innerHTML = '<div class="text-sm text-gray-400">Analyzing bias...</div>';
+              div.innerHTML = `<div class="text-sm text-gray-400">${t('analyzingBias')}</div>`;
               return div;
             }
             ignoreEvent() { return true; }
@@ -1043,7 +1044,10 @@ function CMEditor({
           })
         });
         
-        if (!res.ok) throw new Error('Bias analysis failed');
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || `Bias analysis failed (${res.status})`);
+        }
         
         const data = await res.json() as { text: string };
         const responseText = data.text.trim();
@@ -1147,7 +1151,7 @@ function CMEditor({
               div.style.borderRadius = '8px';
               div.style.background = 'var(--background)';
               div.style.maxWidth = '95%';
-              div.innerHTML = '<div class="text-sm text-red-400">Bias analysis failed. Please try again.</div>';
+              div.innerHTML = `<div class="text-sm text-red-400">${t('biasError')}</div>`;
               return div;
             }
             ignoreEvent() { return true; }
@@ -1177,7 +1181,7 @@ function CMEditor({
               div.style.borderRadius = '8px';
               div.style.background = 'var(--background)';
               div.style.maxWidth = '95%';
-              div.innerHTML = '<div class="text-sm text-gray-400">Paraphrasing...</div>';
+              div.innerHTML = `<div class="text-sm text-gray-400">${t('paraphrasing')}</div>`;
               return div;
             }
             ignoreEvent() { return true; }
@@ -1209,7 +1213,17 @@ function CMEditor({
           })
         });
         
-        if (!res.ok) throw new Error('Paraphrasing failed');
+        if (!res.ok) {
+          let errMsg = `Paraphrasing failed (${res.status})`;
+          try {
+            const errData = await res.json();
+            errMsg = errData.error || errMsg;
+          } catch {
+            const text = await res.text().catch(() => '');
+            if (text) errMsg = `${errMsg}: ${text.substring(0, 100)}`;
+          }
+          throw new Error(errMsg);
+        }
         
         const data = await res.json() as { text: string };
         const paraphrasedText = data.text.trim();
@@ -1250,7 +1264,7 @@ function CMEditor({
               div.style.borderRadius = '8px';
               div.style.background = 'var(--background)';
               div.style.maxWidth = '95%';
-              div.innerHTML = '<div class="text-sm text-red-400">Paraphrasing failed. Please try again.</div>';
+              div.innerHTML = `<div class="text-sm text-red-400">${t('paraphraseError')}</div>`;
               return div;
             }
             ignoreEvent() { return true; }
@@ -1280,7 +1294,7 @@ function CMEditor({
               div.style.borderRadius = '8px';
               div.style.background = 'var(--background)';
               div.style.maxWidth = '95%';
-              div.innerHTML = '<div class="text-sm text-gray-400">Validating idea...</div>';
+              div.innerHTML = `<div class="text-sm text-gray-400">${t('validatingIdea')}</div>`;
               return div;
             }
             ignoreEvent() { return true; }
@@ -1332,7 +1346,10 @@ Return as JSON with this structure:
           })
         });
         
-        if (!res.ok) throw new Error('Idea validation failed');
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || `Idea validation failed (${res.status})`);
+        }
         
         const data = await res.json() as { text: string };
         const responseText = data.text.trim();
@@ -1453,7 +1470,7 @@ Return as JSON with this structure:
               div.style.borderRadius = '8px';
               div.style.background = 'var(--background)';
               div.style.maxWidth = '95%';
-              div.innerHTML = '<div class="text-sm text-red-400">Idea validation failed. Please try again.</div>';
+              div.innerHTML = `<div class="text-sm text-red-400">${t('validationError')}</div>`;
               return div;
             }
             ignoreEvent() { return true; }
@@ -1587,7 +1604,7 @@ Return as JSON with this structure:
   );
 }
 
-function CMInlineChat({ selectedText, onClose, onResult }: { selectedText: string; onClose: () => void; onResult: (s: string) => void }) {
+function CMInlineChat({ selectedText, onClose, onResult, t }: { selectedText: string; onClose: () => void; onResult: (s: string) => void; t: (key: string) => string }) {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -1698,7 +1715,7 @@ function CMInlineChat({ selectedText, onClose, onResult }: { selectedText: strin
       )}
       <textarea
         className="w-full px-2 py-1 pr-10 rounded border-none focus:outline-none text-base mb-2 resize-none overflow-hidden whitespace-pre-wrap break-words"
-        placeholder="Ask about the selected text..."
+        placeholder={t('askQuestion')}
         value={input}
         onChange={e => setInput(e.target.value)}
         ref={inputRef}
@@ -1732,13 +1749,14 @@ function CMInlineChat({ selectedText, onClose, onResult }: { selectedText: strin
           disabled={loading}
           title="Ctrl/Cmd+Enter"
         >
-          {loading ? 'Thinking…' : 'Send'}
+          {loading ? t('generating') : t('send')}
         </button>
       </div>
     </div>
   );
 }
 export default function JournalEditor() {
+  const _t = useTranslations('Editor');
   const dispatch = useDispatch();
   // Use journalEntries from Redux store
   const entries = useSelector((state: { journalEntries: { entries: JournalEntry[] } }) => state.journalEntries.entries);
@@ -2140,7 +2158,7 @@ export default function JournalEditor() {
           title="Alt+H"
         >
           <FaHistory className="w-4 h-4" />
-          Validation History
+          {_t('validationHistory')}
         </button>
         <div className="flex-1" />
         <Saving />
@@ -2210,7 +2228,7 @@ export default function JournalEditor() {
         })()}
         {(!content || content.trim().length === 0) && !isStarterActive && (
           <div className="pointer-events-none absolute top-2 left-4 text-(--secondary) text-md opacity-60 select-none">
-            Start writing here...
+            {_t('startWriting')}
           </div>
         )}
         <CMEditor
@@ -2225,6 +2243,7 @@ export default function JournalEditor() {
           locked={showStarterInline}
           onUnlock={() => setStarterDismissed(true)}
           focusTick={focusTick}
+          t={_t}
         />
       </div>
       {preview && (

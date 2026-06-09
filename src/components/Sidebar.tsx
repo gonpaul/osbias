@@ -1,12 +1,11 @@
 'use client';
+
 import Link from 'next/link';
-import { 
+import {
   FaSignOutAlt,
   FaUsersCog
 } from 'react-icons/fa';
-// import { sessionUtils } from '@/lib/session';
 import { GoPencil } from "react-icons/go";
-// import { GiProcessor } from "react-icons/gi";
 import { PiGraphLight } from "react-icons/pi";
 import { BiSolidPyramid } from "react-icons/bi";
 import { GiMountainRoad } from "react-icons/gi";
@@ -15,22 +14,22 @@ import { clearUser } from '@/lib/redux/slices/authSlice';
 import { usePathname } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
 import Image from 'next/image';
-
-const navigation = [
-  { name: 'Editor', href: '/', icon: GoPencil},
-  { name: 'Feed', href: '/feed', icon: FaRss},
-  { name: 'Frameworks', href: '/frameworks', icon: FaCubes},
-  // { name: 'Mental models', href: '/mental-models', icon: GiProcessor},
-  // { name: 'Graph view', href: '/graph-view', icon: PiGraphLight},
-  // { name: 'Belief system', href: '/belief-system', icon: BiSolidPyramid},
-  { name: 'Goals', href: '/goals-system', icon: GiMountainRoad},
-];
+import { useTranslations } from 'next-intl';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 
 export default function Sidebar() {
   const pathname = usePathname();
   const dispatch = useDispatch();
+  const t = useTranslations('Nav');
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const user = useSelector((state: any) => state.auth?.user)
+
+  const navigation = [
+    { name: t('editor'), href: '/', icon: GoPencil},
+    { name: t('feed'), href: '/feed', icon: FaRss},
+    { name: t('frameworks'), href: '/frameworks', icon: FaCubes},
+    { name: t('goals'), href: '/goals-system', icon: GiMountainRoad},
+  ];
 
   const handleSignOut = async () => {
     try {
@@ -42,16 +41,14 @@ export default function Sidebar() {
     }
   };
 
-//   const handleSignOut = () => {
-//     sessionUtils.clearSession();
-//     router.push('/auth');
-//   };
-
   return (
     <div className="group bg-(--dark) absolute top-0 left-0 h-screen w-30 hover:w-100 overflow-x-hidden overflow-y-auto space-y-6 mt-0 pb-7 px-4 hover:px-7 transition-all duration-300 ease-in-out z-30">
       <div className="text-2xl font-semibold text-start ms-3 my-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
         Osbias 
-        {/* Qualia */}
+      </div>
+
+      <div className="flex justify-center w-30 px-5 ms-3 mb-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+        <LanguageSwitcher />
       </div>
       
       <nav className="space-y-2 pe-4 border-r-(--secondary)/30 border-r-1 group-hover:border-r-0">
@@ -85,7 +82,7 @@ export default function Sidebar() {
           >
             <FaUsersCog className="w-10 h-10 flex-shrink-0" />
             <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
-              Admin
+              {t('admin')}
             </span>
           </Link>
         )}
@@ -96,7 +93,6 @@ export default function Sidebar() {
           <div className="mx-3 mb-12 ps-4 opacity-0 group-hover:opacity-100 hover:bg-(--natural-gray)/40 rounded-xl p-2 transition-colors duration-300">
             <Link href="/profile" className="block">
               <div className="grid grid-cols-4 grid-rows-2 items-center">
-                {/* Image: spans two rows in first column */}
                 <div className="row-span-2 col-span-1 me-3 flex items-center justify-center">
                   {user.picture ? (
                     <Image
@@ -110,11 +106,9 @@ export default function Sidebar() {
                     </div>
                   )}
                 </div>
-                {/* Name: second column, first row */}
                 <div className="col-span-3 row-span-1 text-base font-semibold text-(--foreground)">
                   {user.name}
                 </div>
-                {/* Nickname: second column, second row */}
                 <div className="col-span-3 row-span-1 text-xs text-(--secondary)">
                   {user.nickname || user.email}
                 </div>
@@ -128,7 +122,7 @@ export default function Sidebar() {
         >
           <FaSignOutAlt className="w-7 h-7 flex-shrink-0" />
           <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
-            Sign Out
+            {t('signOut')}
           </span>
         </button>
       </div>

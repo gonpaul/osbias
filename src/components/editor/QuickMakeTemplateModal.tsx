@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { emitUIEvent, onUIEvent } from '@/lib/uiEvents';
 import { FaTimes } from 'react-icons/fa';
 
@@ -16,6 +17,7 @@ interface CurrentEntry {
 }
 
 export default function QuickMakeTemplateModal({ isOpen, onClose }: QuickMakeTemplateModalProps) {
+  const t = useTranslations('Editor');
   const [currentEntry, setCurrentEntry] = useState<CurrentEntry | null>(null);
   const [tags, setTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState('');
@@ -53,7 +55,7 @@ export default function QuickMakeTemplateModal({ isOpen, onClose }: QuickMakeTem
 
   const handleSave = async () => {
     if (!currentEntry?.id || currentEntry.id === -1) {
-      setError('Cannot make a draft entry into a template. Please save the entry first.');
+      setError(t('draftError'));
       return;
     }
 
@@ -77,10 +79,10 @@ export default function QuickMakeTemplateModal({ isOpen, onClose }: QuickMakeTem
         setNewTag('');
       } else {
         const errorData = await response.json();
-        setError(errorData.error || 'Failed to save template');
+        setError(errorData.error || t('saveTemplateError'));
       }
     } catch {
-      setError('Failed to save template');
+      setError(t('saveTemplateError'));
     } finally {
       setLoading(false);
     }
@@ -92,7 +94,7 @@ export default function QuickMakeTemplateModal({ isOpen, onClose }: QuickMakeTem
     <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-50">
       <div className="bg-(--background) border border-(--secondary)/30 rounded-xl mt-20 p-6 w-full max-w-md mx-4">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold">Make a template</h3>
+          <h3 className="text-lg font-semibold">{t('makeTemplate')}</h3>
           <button
             onClick={onClose}
             className="text-(--secondary) hover:text-(--foreground) transition-colors duration-300 cursor-pointer"
@@ -104,7 +106,7 @@ export default function QuickMakeTemplateModal({ isOpen, onClose }: QuickMakeTem
         <div className="space-y-4">
 
           <div>
-            <label className="block text-sm font-medium mb-2">Tags</label>
+            <label className="block text-sm font-medium mb-2">{t('tags')}</label>
             <div className="flex flex-wrap gap-2 mb-2">
               {tags.map((tag, index) => (
                 <span
@@ -127,14 +129,14 @@ export default function QuickMakeTemplateModal({ isOpen, onClose }: QuickMakeTem
                 value={newTag}
                 onChange={(e) => setNewTag(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Add a tag..."
+                placeholder={t('addTag')}
                 className="flex-1 px-3 py-2 bg-(--darkelbg) border border-(--secondary)/30 rounded focus:outline-none focus:border-(--emphasis)/50 transition-colors duration-300"
               />
               <button
                 onClick={handleAddTag}
                 className="px-3 py-2 bg-(--emphasis) text-white rounded hover:bg-(--emphasis)/80 transition-colors duration-300 cursor-pointer"
               >
-                Add
+                {t('add')}
               </button>
             </div>
           </div>
@@ -148,14 +150,14 @@ export default function QuickMakeTemplateModal({ isOpen, onClose }: QuickMakeTem
               onClick={onClose}
               className="flex-1 px-4 py-2 border border-(--secondary)/30 rounded hover:bg-(--darkelbg) transition-colors duration-300 cursor-pointer"
             >
-              Cancel
+              {t('cancel')}
             </button>
             <button
               onClick={handleSave}
               disabled={loading}
               className="flex-1 px-4 py-2 bg-(--emphasis) text-white rounded hover:bg-(--emphasis)/80 disabled:opacity-50 transition-colors duration-300 cursor-pointer"
             >
-              {loading ? 'Saving...' : 'Save Template'}
+              {loading ? t('saving') : t('saveTemplate')}
             </button>
           </div>
         </div>

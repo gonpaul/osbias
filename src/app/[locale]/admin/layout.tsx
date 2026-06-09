@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { useLocale } from 'next-intl';
 
 export default function AdminLayout({
   children,
@@ -8,6 +9,7 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const locale = useLocale();
 
   useEffect(() => {
     (async () => {
@@ -35,7 +37,7 @@ export default function AdminLayout({
       <div className="p-6">
         <p>Forbidden. Admins only.</p>
         <p>
-          <Link className="underline" href="/">Go back</Link>
+          <Link className="underline" href={`/${locale}/`}>Go back</Link>
         </p>
       </div>
     );
@@ -47,8 +49,8 @@ export default function AdminLayout({
         <div className="max-w-[min(94vw,1400px)] mx-auto flex items-center justify-start gap-20">
           <h1 className="text-xl font-semibold">Admin</h1>
           <nav className="flex gap-4">
-            <Link className="px-3 py-2 rounded-md border border-(--secondary)/30 hover:border-(--golden)/50 transition-colors cursor-pointer" href="/admin/users">Users</Link>
-            <Link className="px-3 py-2 rounded-md border border-(--secondary)/30 hover:border-(--golden)/50 transition-colors cursor-pointer" href="/admin/posts">Posts</Link>
+            <Link className="px-3 py-2 rounded-md border border-(--secondary)/30 hover:border-(--golden)/50 transition-colors cursor-pointer" href={`/${locale}/admin/users`}>Users</Link>
+            <Link className="px-3 py-2 rounded-md border border-(--secondary)/30 hover:border-(--golden)/50 transition-colors cursor-pointer" href={`/${locale}/admin/posts`}>Posts</Link>
           </nav>
         </div>
       </header>
@@ -56,5 +58,3 @@ export default function AdminLayout({
     </div>
   );
 }
-
-

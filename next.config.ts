@@ -1,10 +1,8 @@
-import type { NextConfig } from "next";
+const withNextIntl = require('next-intl/plugin')('./src/i18n/request.ts');
 
-const nextConfig: NextConfig = {
-  // experimental: {
-  //   serverComponentsExternalPackages: ["knex", "better-sqlite3"],
-  // },
-  serverExternalPackages: ["knex", "better-sqlite3"],
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  serverExternalPackages: ['knex', 'better-sqlite3'],
 };
 
-export default nextConfig;
+module.exports = withNextIntl(nextConfig);

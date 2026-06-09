@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { FaSearch, FaEye, FaClock, FaTag, FaTimes } from 'react-icons/fa';
 import { BiSolidPyramid } from 'react-icons/bi';
 
@@ -40,6 +41,8 @@ export default function FrameworkTemplatePopup({
   onClose, 
   onSelectFramework 
 }: FrameworkTemplatePopupProps) {
+  const t = useTranslations('Editor');
+
   useEffect(() => {
     if (!isOpen) return;
     const onKey = (e: KeyboardEvent) => {
@@ -127,10 +130,10 @@ export default function FrameworkTemplatePopup({
               <div>
                 <h2 className="text-2xl font-bold text-(--foreground) flex items-center gap-3">
                   <BiSolidPyramid className="text-(--golden)" />
-                  Choose Framework Template
+                  {t('chooseFramework')}
                 </h2>
                 <p className="text-(--secondary) mt-2">
-                  Select a framework to structure your thinking
+                  {t('chooseFrameworkDesc')}
                 </p>
               </div>
               <button
@@ -147,7 +150,7 @@ export default function FrameworkTemplatePopup({
                 <FaSearch className="absolute left-5 top-1/2 transform -translate-y-1/2 text-(--secondary)" />
                 <input
                   type="text"
-                  placeholder="Search frameworks..."
+                  placeholder={t('searchFrameworks')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full pl-16 pr-4 py-3 bg-(--background) border border-(--secondary)/30 rounded-lg text-(--foreground) placeholder-(--secondary) focus:outline-none focus:border-(--golden)"
@@ -160,7 +163,7 @@ export default function FrameworkTemplatePopup({
           <div className="p-6 overflow-y-auto max-h-[70vh]">
             {loading ? (
               <div className="text-center py-8">
-                <div className="text-(--foreground) text-lg">Loading frameworks...</div>
+                <div className="text-(--foreground) text-lg">{t('loadingFrameworks')}</div>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -178,7 +181,7 @@ export default function FrameworkTemplatePopup({
                           </h3>
                           {framework.is_system && (
                             <span className="inline-block mt-1 px-2 py-1 text-xs bg-(--golden)/20 text-(--golden) rounded-full">
-                              System Framework
+                              {t('systemFramework')}
                             </span>
                           )}
                         </div>
@@ -212,7 +215,7 @@ export default function FrameworkTemplatePopup({
                           onClick={() => handleSelectFramework(framework)}
                           className="flex-1 bg-(--emphasis) hover:bg-(--emphasis)/80 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-300 cursor-pointer flex items-center justify-center gap-2"
                         >
-                          Use Template
+                          {t('useTemplate')}
                         </button>
                         <button
                           onClick={() => handleViewDetails(framework)}
@@ -232,10 +235,10 @@ export default function FrameworkTemplatePopup({
               <div className="text-center py-12">
                 <BiSolidPyramid className="mx-auto text-6xl text-(--secondary)/50 mb-4" />
                 <h3 className="text-xl font-semibold text-(--foreground) mb-2">
-                  No frameworks found
+                  {t('noFrameworksFound')}
                 </h3>
                 <p className="text-(--secondary)">
-                  Try adjusting your search criteria
+                  {t('tryAdjustSearch')}
                 </p>
               </div>
             )}
@@ -256,7 +259,7 @@ export default function FrameworkTemplatePopup({
                   </h2>
                   {selectedFramework.is_system && (
                     <span className="inline-block px-3 py-1 text-sm bg-(--golden)/20 text-(--golden) rounded-full">
-                      System Framework
+                      {t('systemFramework')}
                     </span>
                   )}
                 </div>
@@ -277,7 +280,7 @@ export default function FrameworkTemplatePopup({
               <div className="mb-6">
                 <h3 className="text-lg font-semibold text-(--foreground) mb-3 flex items-center gap-2">
                   <FaTag />
-                  Key Concepts
+                  {t('keyConcepts')}
                 </h3>
                 <div className="flex flex-wrap gap-2">
                   {selectedFramework.concepts.map((concept, index) => (
@@ -296,7 +299,7 @@ export default function FrameworkTemplatePopup({
                 <div className="mb-6">
                   <h3 className="text-lg font-semibold text-(--foreground) mb-4 flex items-center gap-2">
                     <FaClock />
-                    Framework Steps ({selectedFramework.steps.length})
+                    {t('frameworkSteps')} ({selectedFramework.steps.length})
                   </h3>
                   <div className="space-y-4">
                     {selectedFramework.steps
@@ -334,13 +337,13 @@ export default function FrameworkTemplatePopup({
                   className="flex-1 bg-(--emphasis) hover:bg-(--emphasis)/80 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-300 cursor-pointer flex items-center justify-center gap-2"
                 >
                   <FaEye />
-                  Use This Framework
+                  {t('useThisFramework')}
                 </button>
                 <button
                   onClick={() => setSelectedFramework(null)}
                   className="px-6 py-3 border border-(--secondary)/30 hover:border-(--golden)/50 text-(--foreground) rounded-lg transition-colors duration-300 cursor-pointer"
                 >
-                  Close
+                  {t('close')}
                 </button>
               </div>
             </div>

@@ -2,6 +2,7 @@
 
 import React, { useRef, useState, useEffect } from 'react';
 import { FaHistory, FaPaperPlane, FaUser, FaRobot, FaTrash } from 'react-icons/fa';
+import { useTranslations, useLocale } from 'next-intl';
 
 interface Message {
   id: string;
@@ -15,6 +16,8 @@ interface ChatProps {
 }
 
 const Chat: React.FC<ChatProps> = ({ className = '' }) => {
+  const t = useTranslations('Editor');
+  const locale = useLocale();
   const [message, setMessage] = useState('');
   // Deprecated local tabs; sessions replace this
   const [messages, setMessages] = useState<Message[]>([]);
@@ -114,7 +117,7 @@ const Chat: React.FC<ChatProps> = ({ className = '' }) => {
     // Only create server session when we have a message to send
     // For now, create a temporary local session ID
     const tempId = Date.now();
-    const name = messages[0]?.content?.slice(0, 40) || 'New Chat';
+    const name = messages[0]?.content?.slice(0, 40) || t('newChat');
     
     // Create local session entry
     const localSession = { id: tempId, name };
@@ -160,7 +163,7 @@ const Chat: React.FC<ChatProps> = ({ className = '' }) => {
   const isStreamingRef = useRef(false);
 
   async function deleteSession(sessionId: number) {
-    const confirmed = window.confirm('Delete this chat permanently?');
+    const confirmed = window.confirm(t('deleteConfirm'));
     if (!confirmed) return;
 
     try {
@@ -210,7 +213,7 @@ const Chat: React.FC<ChatProps> = ({ className = '' }) => {
         try {
           const tempId = sessionId;
           const local = sessions.find(s => s.id === tempId);
-          const name = local?.name || messages[0]?.content?.slice(0, 40) || 'New Chat';
+          const name = local?.name || messages[0]?.content?.slice(0, 40) || t('newChat');
           const res = await fetch('/api/chat/sessions', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -323,7 +326,7 @@ const Chat: React.FC<ChatProps> = ({ className = '' }) => {
   };
 
   const formatTimestamp = (date: Date) => {
-    return date.toLocaleTimeString('en-US', { 
+    return date.toLocaleTimeString(locale, { 
       hour: '2-digit',
       minute: '2-digit'
     });
@@ -336,12 +339,12 @@ const Chat: React.FC<ChatProps> = ({ className = '' }) => {
       
         <div className="flex items-center justify-between mb-3">
           <span className="flex-1 text-lg font-semibold text-(--foreground) text-center block">
-            Chat
+            {t('chat')}
           </span>
           <button
             onClick={() => setIsHistoryOpen((v) => !v)}
             className="p-2 text-(--secondary) cursor-pointer hover:text-(--foreground) hover:bg-(--darkelbg) rounded-lg transition-colors ml-auto"
-            title="Chat History"
+            title={t('chatHistory')}
           >
             <FaHistory className="w-8 h-8" />
           </button>
@@ -355,7 +358,7 @@ const Chat: React.FC<ChatProps> = ({ className = '' }) => {
           >
             <button
               onClick={() => {
-                const name = prompt('New chat name') || 'New Chat';
+                const name = prompt('New chat name') || t('newChat');
                 // Create local session only - server session will be created when first message is sent
                 const tempId = Date.now();
                 const localSession = { id: tempId, name };
@@ -411,8 +414,8 @@ const Chat: React.FC<ChatProps> = ({ className = '' }) => {
                   className={`px-1 py-1 text-xs rounded cursor-pointer transition-colors
                     ${activeSessionId === s.id ? 'hover:bg-white/20' : 'hover:bg-(--darkelbg) hover:text-(--foreground)'}
                   `}
-                  aria-label={`Close ${s.name}`}
-                  title="Close session"
+                  aria-label={t('closeSession')}
+                  title={t('closeSession')}
                 >
                   ×
                 </button>
@@ -426,7 +429,7 @@ const Chat: React.FC<ChatProps> = ({ className = '' }) => {
         <div className="border-t border-(--secondary)/20 w-full px-2 pt-4 pb-2 mt-3 \
         flex-shrink-0 h-fit max-h-[150px] overflow-y-auto">
           {sessions.length === 0 && (
-            <div className="text-(--secondary) text-sm">No sessions yet</div>
+            <div className="text-(--secondary) text-sm">{t('noSessions')}</div>
           )}
           {sessions.map((s) => (
             <div
@@ -454,8 +457,8 @@ const Chat: React.FC<ChatProps> = ({ className = '' }) => {
                   <button
                     onClick={() => void deleteSession(s.id)}
                     className="p-1 rounded cursor-pointer transition-colors duration-300"
-                    aria-label={`Delete ${s.name}`}
-                    title="Delete session"
+                    aria-label={t('deleteSession')}
+                    title={t('deleteSession')}
                   >
                     <FaTrash className="w-5 h-5 transition-colors duration-300 hover:text-red-600" />
                   </button>
@@ -475,28 +478,28 @@ const Chat: React.FC<ChatProps> = ({ className = '' }) => {
               <div className="mx-auto w-14 h-14 rounded-full bg-(--emphasis) flex items-center justify-center mb-3">
                 <FaRobot className="w-8 h-8 text-white" />
               </div>
-              <div className="text-(--foreground) font-semibold text-lg mb-1">Welcome to Chat</div>
+              <div className="text-(--foreground) font-semibold text-lg mb-1">{t('welcomeChat')}</div>
               <div className="text-(--secondary) text-sm mb-4">
-                Ask a question or describe what you need help with.
+                {t('welcomeChatDesc')}
               </div>
               <div className="flex flex-wrap gap-2 justify-center">
                 <button
                   className="px-3 py-1.5 text-xs rounded-lg border border-(--secondary)/30 hover:border-(--golden)/50 text-(--foreground) transition-colors"
                   // onClick={() => setMessage('Summarize my recent notes into 3 bullet points.')}
                 >
-                  Summarize notes
+                  {t('summarizeNotes')}
                 </button>
                 <button
                   className="px-3 py-1.5 text-xs rounded-lg border border-(--secondary)/30 hover:border-(--golden)/50 text-(--foreground) transition-colors"
                   // onClick={() => setMessage('Brainstorm 5 ideas to improve focus today.')}
                 >
-                  Brainstorm ideas
+                  {t('brainstormIdeas')}
                 </button>
                 <button
                   className="px-3 py-1.5 text-xs rounded-lg border border-(--secondary)/30 hover:border-(--golden)/50 text-(--foreground) transition-colors"
                   // onClick={() => setMessage('Create a step-by-step plan to learn a new topic.')}
                 >
-                  Make a plan
+                  {t('makeAPlan')}
                 </button>
               </div>
             </div>

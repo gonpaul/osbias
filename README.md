@@ -1,304 +1,155 @@
-# Idea A **digital tool** (or suite of tools) that helps people become _better thinkers_ and _more intentional humans_ — by enabling them to:
+# Osbias — Cognitive Journal
 
-- Think more clearly
+A full-stack cognitive journaling web app that helps people become **better thinkers** through AI-powered journaling, bias detection, idea validation, and structured thinking frameworks.
 
-- Challenge themselves via ai suggestions
+Built with **Next.js 15**, **TypeScript**, **SQLite** (via Knex), **Redux Toolkit**, **CodeMirror**, and **next-intl** for i18n (EN/RU).
 
-- Solve meaningful problems
+## Setup
 
-- Understand themselves and the world
+### Prerequisites
+- Node.js ≥ 20
+- pnpm ≥ 10
 
-- Make better decisions
+### Install & Run
 
-- Overcome limiting beliefs
+```bash
+pnpm install
+pnpm run db:migrate
+pnpm run seed:dev
+pnpm run dev         # http://localhost:9001
+```
 
-- Live purposefully
+The app runs on port **9001** by default.
 
+### Database
 
-It sits at the intersection of **AI, systems design, education, psychology, linguistics**, and **philosophy of mind**.
+```bash
+pnpm run db:migrate          # run migrations
+pnpm run db:rollback         # rollback last migration
+pnpm run seed:dev            # seed admin user (admin@osbias.local / Admin1234!)
+pnpm run db:backup           # backup SQLite DB
+pnpm run db:migrate:safe     # backup + migrate
+```
 
-## 1. High-Level Functionality (MVP Scope)
+### Known Issue: `better-sqlite3` Native Build
 
-**Think of it as a mix between:**
+On some systems (especially after Node.js upgrades), the `better-sqlite3` native module may fail with:
 
-- **Roam Research** → Networked thought and idea development
+```
+Could not locate the bindings file. Tried: ...
+```
 
-- **Perplexity / Claude** → AI that helps answer and explore ideas deeply
+**Fix:**
 
-- **Duolingo for the mind** → Micro challenges that build reasoning skills
+```bash
+pnpm rebuild better-sqlite3
+```
 
-- **Notion + Self-authoring** → A reflective and actionable life management system
+If that fails, ensure build tools are installed:
 
-- **A cognitive “gym” or coach** → To stretch and refine your thinking
+```bash
+# Arch Linux
+sudo pacman -S base-devel python3
 
-### Feature Modules (first 3–6 months MVP)
+# Then rebuild
+pnpm rebuild better-sqlite3
+```
 
-|Module|Function|User Benefit|
-|---|---|---|
-|**Mental Models Studio**|Users create, explore, and link mental models with examples, counterexamples, and limitations|Learn how to think, not just what to think|
-|**Socratic Journaling + AI Dialogue**|Prompts + feedback to help users reflect, gain insight, and challenge assumptions|Builds clarity, confidence, and purpose|
-|**Belief Debugger**|Map beliefs → Find contradictions → AI helps debug & align them|Overcome self-sabotaging or fuzzy thinking|
-|**Goal→Action System**|Break goals into coherent systems with feedback loops|Converts vision into proactive motion|
-|**Thinking Quests**|Small guided challenges (“Think like Popper on topic X”)|Builds epistemic rigor and problem-solving|
-|**Semantic Mapper / Linguistic Clarifier**|Helps translate vague or emotionally charged language into logical, precise ideas|Avoids miscommunication and thinking traps|
+As a last resort, force reinstall:
 
----
+```bash
+rm -rf node_modules
+pnpm install
+```
 
-## 🔹 2. Technical Design Overview
+## Testing
 
-|Layer|Details|
+### E2E Tests (Playwright)
+
+Requires a **running dev server** on port 3001:
+
+```bash
+# Terminal 1: start server on port 3001
+pnpm run dev -- --port 3001
+
+# Terminal 2: run tests
+pnpm run test:e2e
+```
+
+Or run a single test file:
+
+```bash
+pnpx playwright test tests/e2e/auth.spec.ts --reporter=list
+```
+
+### DB Relationship Tests
+
+```bash
+pnpm run test:db
+```
+
+## Deployment
+
+### Build
+
+```bash
+pnpm run build
+pnpm run start          # production server (port 3000)
+```
+
+### Environment Variables
+
+| Variable | Description |
 |---|---|
-|**Frontend**|React + Tailwind + Framer Motion for fast, beautiful UI/UX|
-|**Backend**|Python or Node.js with a PostgreSQL (or graph DB) backend|
-|**AI/ML Layer**|OpenAI or Claude API + custom reasoning scaffolds / prompt engineering|
-|**Data Models**|Mental models, user goals, belief graphs, session memory|
-|**Interoperability**|Markdown export, knowledge graph, API for integrations (Obsidian, Notion)|
-|**Privacy / Data Ownership**|All data owned by the user — no cloud lock-in|
+| `JWT_SECRET` | Secret for JWT signing (default: `dev-secret`) |
+| `NEXT_PUBLIC_BASE_URL` | Public base URL for OG tags |
 
----
+### Quick Deploy (systemd)
 
+```ini
+[Unit]
+Description=Osbias Cognitive Journal
+After=network.target
 
-## 🔹 3. Rational Engineering Principles
+[Service]
+WorkingDirectory=/path/to/osbias-main
+ExecStart=/usr/bin/node .next/standalone/server.js
+Environment=NODE_ENV=production
+Environment=PORT=3000
+Restart=always
 
-|Principle|Manifestation|
+[Install]
+WantedBy=multi-user.target
+```
+
+### Docker (optional)
+
+```dockerfile
+FROM node:20-alpine AS builder
+WORKDIR /app
+COPY . .
+RUN npm i -g pnpm && pnpm install && pnpm run build
+
+FROM node:20-alpine
+WORKDIR /app
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
+EXPOSE 3000
+CMD ["node", "server.js"]
+```
+
+## Tech Stack
+
+| Layer | Tech |
 |---|---|
-|**Refactor beliefs like code**|Beliefs have structure, dependencies, and need debugging|
-|**Fail fast on assumptions**|Track and test assumptions like unit tests|
-|**Modularity of mind**|Treat personality, goals, and habits as systems with components|
-|**Feedback loops**|Built-in “reflections” after use to improve accuracy and insight|
-|**Epistemic rigor**|Use falsifiability, clarity, precision—Popperian standards|
-
----
-
-## 🔹 4. Benefits / Value Proposition
-
-|Type|Benefits|
-|---|---|
-|**Personal growth**|Clearer thinking, better decisions, stronger self-awareness|
-|**Productivity**|Aligned action, reduced internal conflict, better time use|
-|**Emotional**|Confidence, reduction in anxiety caused by uncertainty or internal fog|
-|**Social**|Communicate better, argue more productively, lead others with clarity|
-|**Societal**|A tool that helps elevate civilization’s collective reasoning (in theory)|
-
----
-
-## 🔹 5. Pros & Cons
-
-|Pros|Cons/Risks|
-|---|---|
-|Unique, meaningful, high-impact|Niche audience (at first)|
-|Leverages AI in a non-shallow way|Hard to explain or market clearly|
-|Combines rationality, linguistics, design|May overwhelm new users — needs careful onboarding|
-|First mover advantage (few serious players)|Building quality reasoning tools is hard|
-|Strong monetization potential (premium product for thinkers, coaches, knowledge workers)|Requires high design, UX and performance standards|
-
----
-
-## 🔹 6. Monetization Strategy (Post-MVP)
-
-- **Freemium**: Basic modules free, advanced modules (semantic mapping, belief debugger, AI-assisted reasoning) behind subscription
-
-- **Premium**: $10–20/mo for deep thinkers, knowledge workers, coaches
-
-- **Licensing**: Offer to schools, bootcamps, or corporate training
-
-- **Open Core**: Some parts open-source (to gain trust and adoption), core modules proprietary
-
-
----
-
-
-## 🔹 7. Future Expansion
-
-- Integration with wearable data → _"Are you cognitively sharp today?"_
-
-- GPT-backed agent that evolves with your thinking, not just your content
-
-- Community “model gardens” → Share mental models with others
-
-- Plugins for critical thinking games or dialectical sparring
-
-- Multilingual / cross-cultural dialectics → aligned with your language skills
-
-
----
-
-## 🔹 Final Visualization (Your Ikigai in this Tool)
-
-- **You Love:** building systems, innovation, helping others think better
-
-- **You’re Good At:** math, programming, systems design, linguistics
-
-- **The World Needs:** better thinking, less confusion, rational action
-
-- **You Can Be Paid For:** cognitive tools, coaching platforms, premium SaaS
-
-
----
-
-## **Summary Table:**
-
-|Version|Primary Focus|Must-Have Features|Impact Level|
-|---|---|---|---|
-|**V1**|Ship fast, solve immediate structuring need|Framework Library, Structured Journal, Static Models, Boilerplate Gen|Useful|
-|**V2**|Guided thinking + measurable improvement|Dynamic Models, Bias Checker, Clarity Rewriter, Metrics|Engaging|
-|**V3**|Adaptive, measurable cognitive enhancement|Custom Frameworks, Memory Tracking, Concentration Tools, Reasoning Dashboard|Transformative|
-
----
-
-
-# Requirements
-## v1 - Cognitive journal. Core MVP (Ship Fast & Prove Value)**
-
-**Goal:** Deliver the essential journal + framework workflow so users can immediately structure their thinking and see benefit.
-
-**Core Features:**
-
-1. **Framework Library** — small set (3–5) of thinking frameworks (e.g., First Principles, OODA Loop, Inversion).
-
-2. **Structured Journal** — editor with stages based on the chosen framework.
-
-<!-- 3. **Basic Mental Model Suggestions** — static curated list for each framework stage. -->
-
-4. **Boilerplate Generation** — auto-fill obvious sections like problem restatement, definitions.
-
-5. **Session Save & Search** — users can revisit past reasoning sessions.
-
-
-**Add-Ons in V1:**
-
-- Export sessions to Markdown/JSON.
-
-- Simple dashboard showing “sessions completed this week.”
-
-
-**Why This is Wholesome:**
-Even at this stage, a user can pick a framework, think in a structured way, get nudged with models, and produce a clear, reusable reasoning document.
-
-
-### Build order
-
-1. **Structured Journal Core** — framework stages in the editor.
-    _Reason:_ Without this, the app isn’t differentiated from a notes app. I could combine free form with framework steps to give more freedom to user, if additional comments/paragraphs needed
-
-2. **Framework Library** — 3–5 curated thinking processes.
-
-3. **Boilerplate Generation** — quick wins that make the first session feel magical.
-
-Use cases: definitions, paraphrasing, outlines, generic examples, brainstorm
-
-4. **Static Mental Model Suggestions** — pre-linked to each stage.
-
-A library of concepts, principles, patterns that could be internalized over time
-
-5. **Session Save & Search** — store & retrieve thinking artifacts.
-
-6. **Basic Dashboard & Export** — small retention hook before V2.
-
-
-**Ship Criteria:** User can structure thinking, get nudges, and export results.
-
-
----
-
-# Design
-Modern, stylish, dark blue
-
-# Development
-
-# Testing
-
-Below are common Playwright workflows.
-
-- Install Playwright (browsers and deps):
-
-```bash
-npm i -D @playwright/test
-npx playwright install --with-deps
-```
-
-- Run the starter test headless:
-
-```bash
-npx playwright test tests/e2e/starter.spec.ts
-```
-
-- Run by test title:
-
-```bash
-npx playwright test -g "starter shows on first visit"
-```
-
-- Generate and open HTML report:
-
-```bash
-npx playwright test --reporter=list,html
-npx playwright show-report
-```
-
-- Capture and open a trace:
-
-```bash
-npx playwright test tests/e2e/starter.spec.ts --trace on
-npx playwright show-trace test-results/<failed-dir>/trace.zip
-```
-
-- UI mode on headless servers (Xvfb):
-
-```bash
-xvfb-run -a npx playwright test --ui
-```
-
-# Deployment. Launch
-Create `osbias-db` volume for persistent storage across deployments:
-
-```bash
-docker volume create osbias-db
-```
-
-To list all volumes and see that the volume exists
-```bash
-docker volume ls
-
-# check this specific volume
-docker volume inspect osbias-db
-```
-
-Build the Docker image:
-
-```bash
-docker build -t osbias:latest .
-```
-
-Run the container:
-
-```bash
-docker run -d --name osbias -p 9002:9002 osbias:latest
-```
-
-Stop and remove the container:
-
-```bash
-docker stop osbias
-docker rm osbias
-```
-
-Develoment workflow:
-```bash
-docker build -t osbias:latest .
-docker rm -f osbias || true
-docker run -d \
-  --name osbias \
-  --restart unless-stopped \
-  -p 127.0.0.1:9002:9002 \
-  -v osbias-db:/app/data \
-  -e DB_PATH=/app/data/db.sqlite3 \
-  osbias:latest
-
-# Watch logs in real-time
-docker logs -f osbias
-```
-
-# Support
-
-
+| Framework | Next.js 15 (App Router, Turbopack) |
+| Language | TypeScript |
+| Database | SQLite 3 (better-sqlite3 via Knex ORM) |
+| State | Redux Toolkit |
+| Editor | CodeMirror 6 |
+| i18n | next-intl (EN / RU) |
+| Auth | JWT (cookie-based) |
+| Styling | Tailwind CSS 4 |
+| Testing | Playwright (E2E) |
+| AI | OpenAI / Claude / OpenRouter (pluggable) |

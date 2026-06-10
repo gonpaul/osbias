@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
-import { useTranslations, useLocale } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { emitUIEvent, onUIEvent } from '@/lib/uiEvents';
 import Image from "next/image";
 import FileSystem from "@/components/editor/FileSystem";
@@ -9,7 +9,6 @@ import { CgTemplate } from 'react-icons/cg';
 import { GrValidate } from "react-icons/gr";
 import { FiDownload } from "react-icons/fi";
 import { FaRegKeyboard } from "react-icons/fa";
-import { defaultLocale } from "@/i18n";
 import RightBar from "@/components/editor/RightBar";
 import JournalEditor from "@/components/editor/JournalEditor";
 import FrameworkTemplatePopup from "@/components/editor/FrameworkTemplatePopup";
@@ -20,8 +19,6 @@ import NewTemplateChooserModal from "@/components/editor/NewTemplateChooserModal
 
 export default function Home() {
   const t = useTranslations('Home');
-  const locale = useLocale();
-  const loc = (locale || defaultLocale) as string;
 
   const [isTemplatePopupOpen, setIsTemplatePopupOpen] = useState(false);
   const [isPublishOpen, setIsPublishOpen] = useState(false);

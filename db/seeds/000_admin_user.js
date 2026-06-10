@@ -14,7 +14,11 @@ exports.seed = async function(knex) {
     email,
     password_hash,
     role: 'admin',
-    preferences: null,
+    preferences: JSON.stringify({
+      aiProvider: 'openrouter',
+      aiModel: 'gpt-4o-mini',
+      aiMaxTokens: 512
+    }),
     created_at: knex.fn.now(),
     updated_at: knex.fn.now(),
   });

@@ -447,15 +447,15 @@ function CMEditor({
       if (res.ok) {
         const prefs = await res.json();
         return {
-          provider: prefs.aiProvider || 'openai',
+          provider: prefs.aiProvider || 'openrouter',
           model: prefs.aiModel || 'gpt-4o-mini',
-          maxTokens: prefs.aiMaxTokens || 1000
+          maxTokens: prefs.aiMaxTokens || 512
         };
       }
     } catch (error) {
       console.error('Failed to fetch user preferences:', error);
     }
-    return { provider: 'openai', model: 'gpt-4o-mini', maxTokens: 1000 };
+    return { provider: 'openrouter', model: 'gpt-4o-mini', maxTokens: 512 };
   };
 
   useEffect(() => {

@@ -37,7 +37,7 @@ const Chat: React.FC<ChatProps> = ({ className = '' }) => {
         if (p.ok) {
           const prefs = await p.json();
           setUserChatPrefs({
-            provider: prefs.aiProvider || 'openai',
+            provider: prefs.aiProvider || 'openrouter',
             model: prefs.aiModel || 'gpt-4o-mini',
             maxTokens: prefs.aiMaxTokens || 512,
           });

@@ -122,7 +122,11 @@
     "uses": "Uses:",
     "rating": "Rating:",
     "noRatings": "No ratings",
-    "more": "+{count} more"
+    "more": "+{count} more",
+    "keyConcepts": "Key Concepts",
+    "frameworkSteps": "Framework Steps",
+    "useThisFramework": "Use This Framework",
+    "close": "Close"
   },
   "Goals": {
     "title": "Goals System",
@@ -243,7 +247,9 @@
     "failedFetchHistory": "Failed to fetch validation history",
     "failedSearchHistory": "Failed to search validation history",
     "failedDeleteHistory": "Failed to delete validation history entry",
-    "failedDeleteEntry": "Failed to delete entry"
+    "failedDeleteEntry": "Failed to delete entry",
+    "journalTemplates": "Journal templates",
+    "step": "Step"
   },
   "Shortcuts": {
     "title": "Shortcuts",

@@ -6,7 +6,7 @@ import SidebarGate from '@/components/SidebarGate';
 import ReduxProvider from '@/lib/redux/ReduxProvider';
 import SessionBootstrap from '@/lib/redux/SessionBootstrap';
 import ShortcutsHelp from '@/components/ShortcutsHelp';
-import { locales, defaultLocale } from '@/i18n';
+import { locales, type Locale } from '@/i18n';
 
 type Props = {
   children: ReactNode;
@@ -23,7 +23,7 @@ export async function generateMetadata() {
 export default async function LocaleLayout({ children, params }: Props) {
   const { locale } = await params;
 
-  if (!locales.includes(locale as any)) {
+  if (!locales.includes(locale as Locale)) {
     notFound();
   }
 

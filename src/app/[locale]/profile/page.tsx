@@ -14,7 +14,7 @@ export default function ProfilePage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [prefs, setPrefs] = useState<any>(null);
   const [aiPrefs, setAiPrefs] = useState<UserAIPreferences>({
-    provider: 'openai',
+    provider: 'openrouter',
     model: 'gpt-4o-mini',
     maxTokens: 512
   });

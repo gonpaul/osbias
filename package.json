@@ -14,6 +14,9 @@
     "db:rollback": "knex migrate:rollback",
     "db:backup": "tsx scripts/backup-db.ts",
     "db:migrate:safe": "pnpm run db:backup && pnpm run db:migrate",
+    "setup": "pnpm run db:migrate && pnpm run seed:dev",
+    "seed:prod": "DB_PATH=./db.sqlite3 knex seed:run --env production",
+    "migrate:prod": "DB_PATH=./db.sqlite3 knex migrate:latest --env production",
     "test:e2e": "playwright test"
   },
   "dependencies": {

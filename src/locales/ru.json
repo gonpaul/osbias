@@ -122,7 +122,11 @@
     "uses": "Использований:",
     "rating": "Рейтинг:",
     "noRatings": "Нет оценок",
-    "more": "ещё {count}"
+    "more": "ещё {count}",
+    "keyConcepts": "Ключевые концепции",
+    "frameworkSteps": "Шаги фреймворка",
+    "useThisFramework": "Использовать этот фреймворк",
+    "close": "Закрыть"
   },
   "Goals": {
     "title": "Система целей",
@@ -243,7 +247,9 @@
     "failedFetchHistory": "Не удалось загрузить историю проверок",
     "failedSearchHistory": "Не удалось выполнить поиск",
     "failedDeleteHistory": "Не удалось удалить запись",
-    "failedDeleteEntry": "Не удалось удалить"
+    "failedDeleteEntry": "Не удалось удалить",
+    "journalTemplates": "Шаблоны журнала",
+    "step": "Шаг"
   },
   "Shortcuts": {
     "title": "Горячие клавиши",

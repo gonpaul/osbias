@@ -125,6 +125,29 @@ export default function FrameworksPage() {
     }
   };
 
+  const handleSelectFramework = async (framework: Framework) => {
+    try {
+      let steps = framework.steps;
+      if (!steps) {
+        try {
+          const response = await fetch(`/api/frameworks/${framework.id}/steps`, { credentials: 'include' });
+          if (response.ok) steps = await response.json();
+        } catch (error) {
+          console.error('Error fetching framework steps:', error);
+        }
+      }
+      const frameworkContent = steps && steps.length > 0
+        ? `# ${framework.name}\n\n${framework.description}\n\n## Framework Steps\n\n${steps
+            .sort((a, b) => a.step_order - b.step_order)
+            .map((step) => `### Step ${step.step_order}: ${step.title}\n\n${step.description || 'No description provided.'}\n\n---\n\n`).join('')}`
+        : `# ${framework.name}\n\n${framework.description}\n\n*Framework steps will be loaded when you start editing.*`;
+      window.location.href = `/?framework=${framework.id}&content=${encodeURIComponent(frameworkContent)}`;
+    } catch (error) {
+      console.error('Error using framework:', error);
+      window.location.href = `/?framework=${framework.id}`;
+    }
+  };
+
   const handleViewDetails = async (framework: Framework) => {
     try {
       const response = await fetch(`/api/frameworks/${framework.id}/steps`, { credentials: 'include' });

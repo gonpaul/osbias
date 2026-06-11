@@ -516,7 +516,7 @@ export default function FrameworksPage() {
 
               <div className="flex gap-4 pt-6 border-t border-(--secondary)/30">
                 <button
-                  onClick={() => { handleSelectFramework(selectedFramework); setSelectedFramework(null); }}
+                  onClick={() => { handleSelectFramework(selectedFramework); }}
                   className="flex-1 bg-(--emphasis) hover:bg-(--emphasis)/80 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-300 cursor-pointer flex items-center justify-center gap-2"
                 >
                   <FaEye />

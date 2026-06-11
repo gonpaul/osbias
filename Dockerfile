@@ -3,11 +3,16 @@ WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@10.11.0 --activate
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
-# Allow & rebuild native modules blocked by pnpm (better-sqlite3)
+# Allow native modules blocked by pnpm
 RUN yes | pnpm approve-builds better-sqlite3
+# Install build tools + node-gyp globally (with retry for network flakiness)
 RUN apt-get update && apt-get install -y python3 build-essential && \
-    cd node_modules/.pnpm/better-sqlite3@*/node_modules/better-sqlite3 && \
-    npx node-gyp rebuild
+    npm install -g node-gyp --prefer-online 2>&1 || \
+    npm install -g node-gyp --prefer-online 2>&1
+# Rebuild better-sqlite3 native module
+RUN cd node_modules/.pnpm/better-sqlite3@*/node_modules/better-sqlite3 && \
+    node-gyp rebuild 2>&1 || \
+    (npm install -g node-gyp --prefer-online && node-gyp rebuild)
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN pnpm run build

@@ -1,41 +1,35 @@
-import type { Metadata } from 'next';
-import { headers } from 'next/headers';
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
 import MarkdownContent from '@/components/common/MarkdownContent';
 
-async function buildBaseUrl() {
-  const h = await headers();
-  const host = h.get('x-forwarded-host') || h.get('host') || '';
-  const proto = h.get('x-forwarded-proto') || 'http';
-  return host ? `${proto}://${host}` : '';
+interface Post {
+  id: number;
+  slug: string;
+  title: string;
+  content: string;
+  visibility: string;
+  author?: { id: number; name: string };
+  created_at: string;
+  updated_at: string;
+  reactions?: { like: number; dislike: number };
 }
 
-async function fetchPost(slug: string) {
-  const base = await buildBaseUrl();
-  const res = await fetch(`${base}/api/posts/${slug}`, { cache: 'no-store' });
-  if (!res.ok) return null;
-  return res.json();
-}
+export default function PostPage() {
+  const params = useParams<{ slug: string }>();
+  const slug = params.slug;
+  const [post, setPost] = useState<Post | null>(null);
+  const [loading, setLoading] = useState(true);
 
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const post = await fetchPost(params.slug);
-  if (!post) return { title: 'Post not found' };
-  const description = (post.content || '').replace(/[#>*_`\-\[\]\(\)!]/g, ' ').slice(0, 140);
-  const url = `${process.env.NEXT_PUBLIC_BASE_URL || ''}/p/${post.slug}`;
-  return {
-    title: post.title,
-    description,
-    openGraph: {
-      title: post.title,
-      description,
-      url,
-      type: 'article',
-    },
-    alternates: { canonical: url },
-  };
-}
+  useEffect(() => {
+    fetch(`/api/posts/${slug}`, { credentials: 'include' })
+      .then(res => res.ok ? res.json() : null)
+      .then(data => setPost(data))
+      .finally(() => setLoading(false));
+  }, [slug]);
 
-export default async function PostPage({ params }: { params: { slug: string } }) {
-  const post = await fetchPost(params.slug);
+  if (loading) return <div className="max-w-4xl mx-auto px-8 py-16">Loading...</div>;
   if (!post) return <div className="max-w-4xl mx-auto px-8 py-16">Not found</div>;
 
   return (

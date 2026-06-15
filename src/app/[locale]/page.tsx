@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, lazy } from 'react';
 import { useTranslations } from 'next-intl';
 import { emitUIEvent, onUIEvent } from '@/lib/uiEvents';
 import Image from "next/image";
@@ -9,13 +9,15 @@ import { CgTemplate } from 'react-icons/cg';
 import { GrValidate } from "react-icons/gr";
 import { FiDownload } from "react-icons/fi";
 import { FaRegKeyboard } from "react-icons/fa";
-import RightBar from "@/components/editor/RightBar";
 import JournalEditor from "@/components/editor/JournalEditor";
-import FrameworkTemplatePopup from "@/components/editor/FrameworkTemplatePopup";
-import PublishModal from "@/components/feed/PublishModal";
-import QuickMakeTemplateModal from "@/components/editor/QuickMakeTemplateModal";
-import JournalTemplatesModal from "@/components/editor/JournalTemplatesModal";
-import NewTemplateChooserModal from "@/components/editor/NewTemplateChooserModal";
+
+// Lazy-loaded heavy modals — only loaded when opened
+const RightBar = lazy(() => import('@/components/editor/RightBar'));
+const FrameworkTemplatePopup = lazy(() => import('@/components/editor/FrameworkTemplatePopup'));
+const PublishModal = lazy(() => import('@/components/feed/PublishModal'));
+const QuickMakeTemplateModal = lazy(() => import('@/components/editor/QuickMakeTemplateModal'));
+const JournalTemplatesModal = lazy(() => import('@/components/editor/JournalTemplatesModal'));
+const NewTemplateChooserModal = lazy(() => import('@/components/editor/NewTemplateChooserModal'));
 
 export default function Home() {
   const t = useTranslations('Home');
@@ -204,7 +206,9 @@ export default function Home() {
           </div>
         </div>
 
-        <RightBar />
+        <Suspense fallback={null}>
+          <RightBar />
+        </Suspense>
       </main>
 
       <button
@@ -215,46 +219,66 @@ export default function Home() {
         <FaRegKeyboard className="w-6 h-6" />
       </button>
 
-      <FrameworkTemplatePopup
-        isOpen={isTemplatePopupOpen}
-        onClose={() => setIsTemplatePopupOpen(false)}
-        onSelectFramework={handleSelectFramework}
-      />
+      {isTemplatePopupOpen && (
+        <Suspense fallback={null}>
+          <FrameworkTemplatePopup
+            isOpen={isTemplatePopupOpen}
+            onClose={() => setIsTemplatePopupOpen(false)}
+            onSelectFramework={handleSelectFramework}
+          />
+        </Suspense>
+      )}
 
-      <PublishModal
-        isOpen={isPublishOpen}
-        onClose={() => setIsPublishOpen(false)}
-        entryId={publishData.id}
-        initialTitle={publishData.title}
-        content={publishData.content}
-        onPublished={(slug) => {
-          const url = `${window.location.origin}/p/${slug}`;
-          try { navigator.clipboard.writeText(url); } catch {}
-        }}
-      />
+      {isPublishOpen && (
+        <Suspense fallback={null}>
+          <PublishModal
+            isOpen={isPublishOpen}
+            onClose={() => setIsPublishOpen(false)}
+            entryId={publishData.id}
+            initialTitle={publishData.title}
+            content={publishData.content}
+            onPublished={(slug) => {
+              const url = `${window.location.origin}/p/${slug}`;
+              try { navigator.clipboard.writeText(url); } catch {}
+            }}
+          />
+        </Suspense>
+      )}
 
-      <QuickMakeTemplateModal
-        isOpen={isQuickMakeTemplateOpen}
-        onClose={() => setIsQuickMakeTemplateOpen(false)}
-      />
+      {isQuickMakeTemplateOpen && (
+        <Suspense fallback={null}>
+          <QuickMakeTemplateModal
+            isOpen={isQuickMakeTemplateOpen}
+            onClose={() => setIsQuickMakeTemplateOpen(false)}
+          />
+        </Suspense>
+      )}
 
-      <NewTemplateChooserModal
-        isOpen={isChooserOpen}
-        onClose={() => setIsChooserOpen(false)}
-        onChooseJournalTemplate={() => {
-          setIsChooserOpen(false);
-          setIsJournalTemplatesOpen(true);
-        }}
-        onChooseFrameworkTemplate={() => {
-          setIsChooserOpen(false);
-          setIsTemplatePopupOpen(true);
-        }}
-      />
+      {isChooserOpen && (
+        <Suspense fallback={null}>
+          <NewTemplateChooserModal
+            isOpen={isChooserOpen}
+            onClose={() => setIsChooserOpen(false)}
+            onChooseJournalTemplate={() => {
+              setIsChooserOpen(false);
+              setIsJournalTemplatesOpen(true);
+            }}
+            onChooseFrameworkTemplate={() => {
+              setIsChooserOpen(false);
+              setIsTemplatePopupOpen(true);
+            }}
+          />
+        </Suspense>
+      )}
 
-      <JournalTemplatesModal
-        isOpen={isJournalTemplatesOpen}
-        onClose={() => { setIsJournalTemplatesOpen(false); }}
-      />
+      {isJournalTemplatesOpen && (
+        <Suspense fallback={null}>
+          <JournalTemplatesModal
+            isOpen={isJournalTemplatesOpen}
+            onClose={() => { setIsJournalTemplatesOpen(false); }}
+          />
+        </Suspense>
+      )}
 
       <footer className="hidden gap-[24px] flex-wrap items-center justify-center">
         <a className="flex items-center gap-2 hover:underline hover:underline-offset-4" href="https://nextjs.org/learn" target="_blank" rel="noopener noreferrer">

@@ -31,6 +31,20 @@ export async function getJournalEntries(userId: ID): Promise<JournalEntry[]> {
     .orderBy("created_at", "desc");
 }
 
+export interface JournalEntryHeader {
+  id: ID;
+  title: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function getJournalEntryHeaders(userId: ID): Promise<JournalEntryHeader[]> {
+  return db<JournalEntryHeader>("journal_entries")
+    .where({ user_id: userId })
+    .select("id", "title", "created_at", "updated_at")
+    .orderBy("created_at", "desc");
+}
+
 export async function getJournalEntryById(id: ID): Promise<JournalEntry | undefined> {
   return db<JournalEntry>("journal_entries").where({ id }).first();
 }

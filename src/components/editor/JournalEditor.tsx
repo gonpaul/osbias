@@ -15,6 +15,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useTranslations } from 'next-intl';
 import type { JournalEntry } from '@/lib/redux/slices/journalEntriesSlice';
 import { setEntries, updateEntry } from '@/lib/redux/slices/journalEntriesSlice';
+import { updateHeader, replaceTempHeader } from '@/lib/redux/slices/journalHeadersSlice';
 import { getModelsByProvider } from "@/lib/config/ai-models";
 import { FaHistory } from 'react-icons/fa';
 
@@ -2032,6 +2033,13 @@ export default function JournalEditor() {
         if (!res.ok) throw new Error('POST failed');
         const created = await res.json() as JournalEntry;
         dispatch(setEntries([created, ...entries]));
+        // Sync sidebar headers — replace temp draft header with real one
+        dispatch(replaceTempHeader({
+          id: created.id,
+          title: created.title,
+          created_at: created.created_at || new Date().toISOString(),
+          updated_at: created.updated_at || new Date().toISOString(),
+        }));
         // Update only current entry metadata; do not touch buffer
         dispatch(setCurrentMeta(created));
       } else {
@@ -2047,6 +2055,11 @@ export default function JournalEditor() {
         if (!res.ok) throw new Error('PUT failed');
         const updated = await res.json() as JournalEntry;
         dispatch(setEntries(entries.map(x => x.id === updated.id ? updated : x)));
+        // Sync sidebar headers — update title
+        dispatch(updateHeader({
+          id: updated.id,
+          title: updated.title,
+        }));
         // Update only current entry metadata; do not touch buffer
         dispatch(setCurrentMeta(updated));
       }

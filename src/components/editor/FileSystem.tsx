@@ -1,16 +1,21 @@
 'use client';
 
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, memo } from 'react';
 import { FaFolder, FaFolderOpen } from 'react-icons/fa';
 import { FaRegTrashAlt } from 'react-icons/fa';
 import { useDispatch, useSelector } from 'react-redux';
 import { useTranslations } from 'next-intl';
 import type { RootState } from '@/lib/redux/store';
-import { setEntries, setLoading, setError } from '@/lib/redux/slices/journalEntriesSlice';
-import type { JournalEntry } from '@/lib/redux/slices/journalEntriesSlice';
+import {
+  setHeaders,
+  setLoading,
+  setError,
+  removeHeader,
+  addHeader,
+} from '@/lib/redux/slices/journalHeadersSlice';
+import type { JournalEntryHeader } from '@/models/journal';
 import { setCurrent } from '@/lib/redux/slices/currentJournalSlice';
 
-// JournalEntry type from JournalEditor
 type ID = number;
 
 interface FileSystemItem {
@@ -19,7 +24,7 @@ interface FileSystemItem {
   type: 'file' | 'folder';
   children?: FileSystemItem[];
   path: string;
-  entryId?: number; // For linking to JournalEntry
+  entryId?: number;
 }
 
 interface FileSystemProps {
@@ -27,26 +32,25 @@ interface FileSystemProps {
   className?: string;
 }
 
-function entriesToFileSystem(entries: JournalEntry[], t: (key: string) => string): FileSystemItem[] {
-  // Flat list of entries as files under a "Journal" folder
+function headersToFileSystem(headers: JournalEntryHeader[], t: (key: string) => string): FileSystemItem[] {
   return [
     {
       id: 'journal-root',
       name: t('journalRoot'),
       type: 'folder',
       path: '/journal',
-      children: entries.map(entry => ({
-        id: `entry-${entry.id}`,
-        name: entry.title || `Entry ${entry.id}`,
-        type: 'file',
-        path: `/journal/${entry.id}`,
-        entryId: entry.id,
+      children: headers.map(h => ({
+        id: `entry-${h.id}`,
+        name: h.title || `Entry ${h.id}`,
+        type: 'file' as const,
+        path: `/journal/${h.id}`,
+        entryId: h.id,
       })),
     },
   ];
 }
 
-const FileSystem: React.FC<FileSystemProps> = ({
+const FileSystem: React.FC<FileSystemProps> = memo(({
   width = 'w-80',
   className = ''
 }) => {
@@ -56,21 +60,22 @@ const FileSystem: React.FC<FileSystemProps> = ({
   const [hoveredFileId, setHoveredFileId] = useState<string | null>(null);
   const dispatch = useDispatch();
 
-  // Use entries from Redux store
-  const entries = useSelector((state: RootState) => state.journalEntries.entries);
-  const loading = useSelector((state: RootState) => state.journalEntries.loading);
+  // Use lightweight headers from Redux store (not full entries)
+  const headers = useSelector((state: RootState) => state.journalHeaders.headers);
+  const loading = useSelector((state: RootState) => state.journalHeaders.loading);
   const current = useSelector((state: RootState) => state.currentJournal.current);
 
+  // Load only headers (no content) on mount
   useEffect(() => {
     let active = true;
     (async () => {
       dispatch(setLoading(true));
       try {
-        const res = await fetch('/api/journal', { credentials: 'include' });
+        const res = await fetch('/api/journal/headers', { credentials: 'include' });
         if (!active) return;
         if (res.ok) {
-          const data = await res.json() as JournalEntry[];
-          dispatch(setEntries(data));
+          const data = await res.json() as JournalEntryHeader[];
+          dispatch(setHeaders(data));
         } else {
           dispatch(setError('Failed to load journal entries'));
         }
@@ -85,11 +90,11 @@ const FileSystem: React.FC<FileSystemProps> = ({
   }, [dispatch]);
 
   const fileSystemData: FileSystemItem[] = useMemo(
-    () => entriesToFileSystem(entries, t),
-    [entries, t]
+    () => headersToFileSystem(headers, t),
+    [headers, t]
   );
 
-  const toggleFolder = (folderId: string) => {
+  const toggleFolder = useCallback((folderId: string) => {
     setExpandedFolders(prev => {
       const newSet = new Set(prev);
       if (newSet.has(folderId)) {
@@ -99,75 +104,61 @@ const FileSystem: React.FC<FileSystemProps> = ({
       }
       return newSet;
     });
-  };
+  }, []);
 
-  const handleSearch = () => {
+  const handleSearch = useCallback(() => {
     // Optionally implement search trigger
-  };
+  }, []);
 
-  // Memoize entry lookup for fast access
-  // const entryById = useMemo(() => {
-  //   const map = new Map<number, JournalEntry>();
-  //   for (const entry of entries) {
-  //     map.set(entry.id, entry);
-  //   }
-  //   return map;
-  // }, [entries]);
-  // Returns a JournalEntry by id from Redux state
-  const getEntryById = useCallback(
-    async (id: number) => {
-      try {
-        const res = await fetch(`/api/journal/${id}`, { credentials: 'include' });
-        if (res.ok) {
-          const entry = await res.json();
-          return entry;
-        }
-      } catch (e) {
-        // Optionally handle error
+  // Load single entry on demand (lazy)
+  const fetchEntry = useCallback(async (id: number) => {
+    try {
+      const res = await fetch(`/api/journal/${id}`, { credentials: 'include' });
+      if (res.ok) {
+        return await res.json();
       }
-      return null;
-    },
-    [entries]
-  );
+    } catch (e) {
+      // Optionally handle error
+    }
+    return null;
+  }, []);
 
-  // Handler for clicking a file entry
+  // Handler for clicking a file entry — lazy load content
   const handleFileClick = useCallback(
     async (item: FileSystemItem) => {
       if (item.type !== 'file' || item.entryId == null) return;
-      // Only dispatch if different from current
       if (!current || current.id !== item.entryId) {
-        // const entry = entryById.get(item.entryId);
-        const entry = await getEntryById(item.entryId);
+        const entry = await fetchEntry(item.entryId);
         if (entry) {
           dispatch(setCurrent(entry));
         }
       }
     },
-    // [current, entryById, dispatch]
-    [current, dispatch]
+    [current, dispatch, fetchEntry]
   );
 
-  // --- New and Delete logic ---
   // Create a new draft entry (not yet saved to backend)
   const createNew = useCallback(() => {
-    const draft: JournalEntry = {
-      id: -1,
-      user_id: -1,
-      framework_id: null,
-      title: t('untitled'),
-      content: ''
-    };
-    dispatch(setCurrent(draft));
-    // Signal the UI that a blank draft has been opened so starter overlay can appear
+    const now = new Date().toISOString();
+    const draftId = -Date.now(); // negative temp ID
+    dispatch(setCurrent(null));
+    // Signal the UI that a blank draft has been opened
     try {
       window.dispatchEvent(new CustomEvent('blank-entry-opened'));
     } catch {}
+    // Add placeholder header to sidebar
+    dispatch(addHeader({
+      id: draftId,
+      title: t('untitled'),
+      created_at: now,
+      updated_at: now,
+    }));
   }, [dispatch, t]);
 
-  // Delete the current entry (if any)
   const deleteEntry = useCallback(async (id: ID) => {
-    if (id === -1) {
+    if (id < 0) {
       dispatch(setCurrent(null));
+      dispatch(removeHeader(id));
       return;
     }
     const res = await fetch(`/api/journal/${id}`, {
@@ -175,16 +166,14 @@ const FileSystem: React.FC<FileSystemProps> = ({
       credentials: 'include'
     });
     if (res.status === 204) {
-      dispatch(setEntries(entries.filter(x => x.id !== id)));
+      dispatch(removeHeader(id));
       if (current && current.id === id) {
-        const next = entries.find(x => x.id !== id) || null;
-        dispatch(setCurrent(next || null));
+        dispatch(setCurrent(null));
       }
     }
-  }, [dispatch, entries, current]);
+  }, [dispatch, current]);
 
-  // --- Render file/folder with delete icon logic ---
-  const renderFileSystemItem = (item: FileSystemItem, depth: number = 0): React.ReactNode => {
+  const renderFileSystemItem = useCallback((item: FileSystemItem, depth: number = 0): React.ReactNode => {
     const isExpanded = expandedFolders.has(item.id);
     const isFolder = item.type === 'folder';
     const hasChildren = isFolder && item.children && item.children.length > 0;
@@ -229,7 +218,6 @@ const FileSystem: React.FC<FileSystemProps> = ({
           <span className="text-sm text-gray-700 dark:text-gray-300 truncate min-w-0 flex-1">
             {item.name}
           </span>
-          {/* Delete icon for files */}
           {item.type === 'file' && (
             <span
               className={`
@@ -245,7 +233,6 @@ const FileSystem: React.FC<FileSystemProps> = ({
               role="button"
               tabIndex={-1}
               style={{
-                // color: isCurrent ? '#dc2626' : '#888',
                 color: '#888',
                 cursor: 'pointer',
                 marginLeft: 'auto',
@@ -265,7 +252,7 @@ const FileSystem: React.FC<FileSystemProps> = ({
         )}
       </div>
     );
-  };
+  }, [expandedFolders, current, hoveredFileId, toggleFolder, handleFileClick, deleteEntry, t]);
 
   const filteredData = useMemo(() => {
     if (!searchTerm.trim()) return fileSystemData;
@@ -342,6 +329,8 @@ const FileSystem: React.FC<FileSystemProps> = ({
       </div>
     </div>
   );
-};
+});
+
+FileSystem.displayName = 'FileSystem';
 
 export default FileSystem;

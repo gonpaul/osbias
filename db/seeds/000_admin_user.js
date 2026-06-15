@@ -1,4 +1,5 @@
-const bcrypt = require("bcryptjs");
+// const bcrypt = require("bcryptjs");
+import bcrypt from 'bcryptjs'
 /**
  * @param { import("knex").Knex } knex
  * @returns { Promise<void> } 

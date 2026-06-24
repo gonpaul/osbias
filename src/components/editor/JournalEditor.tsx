@@ -12,11 +12,12 @@ import { keymap, drawSelection, Decoration, WidgetType, DecorationSet } from "@c
 import { history, historyKeymap } from "@codemirror/commands";
 import { defaultKeymap } from "@codemirror/commands";
 import { useSelector, useDispatch } from 'react-redux';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import type { JournalEntry } from '@/lib/redux/slices/journalEntriesSlice';
 import { setEntries, updateEntry } from '@/lib/redux/slices/journalEntriesSlice';
 import { updateHeader, replaceTempHeader } from '@/lib/redux/slices/journalHeadersSlice';
 import { getModelsByProvider } from "@/lib/config/ai-models";
+import { AI_PROMPTS, type AIOperation } from '@/lib/ai/prompts';
 import { FaHistory } from 'react-icons/fa';
 
 // Use currentJournalSlice for current, title, content, saveState, preview
@@ -41,6 +42,7 @@ function CMEditor({
   onUnlock,
   focusTick,
   t,
+  aiLang = 'en',
 }: {
   value: string;
   onChange: (val: string) => void;
@@ -50,6 +52,7 @@ function CMEditor({
   onUnlock?: () => void;
   focusTick?: number;
   t: (key: string) => string;
+  aiLang?: 'en' | 'ru';
 }) {
   const editorRef = useRef<HTMLDivElement | null>(null);
   const viewRef = useRef<EditorView | null>(null);
@@ -1037,8 +1040,8 @@ function CMEditor({
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
           body: JSON.stringify({
-            prompt: `Analyze the following text for bias. Provide a bias score from 0 to 1 (where 0 = no bias, 1 = high bias) and an explanation. Format your response as JSON with "biasScore" (number) and "explanation" (string) fields:\n\n"${text}"`,
-            system: 'You are a bias detection assistant. Analyze text for various types of bias including gender, racial, cultural, political, and other forms of bias. Provide a numerical score from 0 to 1 and a clear explanation of any biases found. Return your response as valid JSON with "biasScore" and "explanation" fields.',
+            prompt: AI_PROMPTS.biasCheck[aiLang].prompt(text),
+            system: AI_PROMPTS.biasCheck[aiLang].system,
             provider: userPrefs.provider,
             model: userPrefs.model,
             maxTokens: userPrefs.maxTokens,
@@ -1206,8 +1209,8 @@ function CMEditor({
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
           body: JSON.stringify({
-            prompt: `Please paraphrase the following text while maintaining its original meaning and tone:\n\n"${text}"`,
-            system: 'You are a helpful writing assistant. Paraphrase the given text while preserving the original meaning, tone, and intent. Make it clear and well-written. Return only the paraphrased result without quotes',
+            prompt: AI_PROMPTS.paraphrase[aiLang].prompt(text),
+            system: AI_PROMPTS.paraphrase[aiLang].system,
             provider: userPrefs.provider,
             model: userPrefs.model,
             maxTokens: userPrefs.maxTokens,
@@ -1319,28 +1322,8 @@ function CMEditor({
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
           body: JSON.stringify({
-            prompt: `Analyze the following text and break it down into a logical validation chain. For each proposition in the chain, extract the core proposition, identify its logical dependencies on previous propositions, determine the appropriate validation environment/context, assess validity with confidence score (0-1), and provide reasoning for the assessment.
-
-Text: "${text}"
-
-Return as JSON with this structure:
-{
-  "overallValid": boolean,
-  "steps": [
-    {
-      "id": "step_1",
-      "proposition": "string",
-      "isValid": boolean,
-      "confidence": number,
-      "reasoning": "string",
-      "dependencies": ["step_0"],
-      "environment": "string"
-    }
-  ],
-  "summary": "string",
-  "recommendations": ["string"]
-}`,
-            system: 'You are an idea validation assistant. Break down ideas into logical propositions and validate each one in its appropriate context. Consider market conditions, technical feasibility, resource availability, and other relevant factors. Provide clear reasoning for each validation and actionable recommendations for improvement.',
+            prompt: AI_PROMPTS.ideaValidation[aiLang].prompt(text),
+            system: AI_PROMPTS.ideaValidation[aiLang].system,
             provider: userPrefs.provider,
             model: userPrefs.model,
             maxTokens: userPrefs.maxTokens,
@@ -1758,6 +1741,8 @@ function CMInlineChat({ selectedText, onClose, onResult, t }: { selectedText: st
 }
 export default function JournalEditor() {
   const _t = useTranslations('Editor');
+  const locale = useLocale();
+  const aiLang = (locale === 'ru' ? 'ru' : 'en') as 'en' | 'ru';
   const dispatch = useDispatch();
   // Use journalEntries from Redux store
   const entries = useSelector((state: { journalEntries: { entries: JournalEntry[] } }) => state.journalEntries.entries);
@@ -2257,6 +2242,7 @@ export default function JournalEditor() {
           onUnlock={() => setStarterDismissed(true)}
           focusTick={focusTick}
           t={_t}
+          aiLang={aiLang}
         />
       </div>
       {preview && (

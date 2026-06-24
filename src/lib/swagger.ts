@@ -1,5 +1,4 @@
 import swaggerJSDoc from 'swagger-jsdoc';
-import { getServerApiBase } from './config/api';
 
 const options = {
   definition: {
@@ -11,8 +10,8 @@ const options = {
     },
     servers: [
       {
-        url: getServerApiBase() + '/api',
-        description: 'Development server',
+        url: (process.env.NEXT_PUBLIC_BASE_URL || '') + '/api',
+        description: process.env.NODE_ENV === 'production' ? 'Production server' : 'Development server',
       },
     ],
     components: {
@@ -25,7 +24,14 @@ const options = {
       },
     },
   },
-  apis: ['./src/app/api/**/*.ts'], // paths to files containing OpenAPI definitions
+  apis: ['./src/app/api/**/*.ts'],
 };
 
-export const swaggerSpec = swaggerJSDoc(options);
+// Generate once at startup, cache for production
+let cachedSpec: object | null = null;
+
+export function getSwaggerSpec() {
+  if (cachedSpec) return cachedSpec;
+  cachedSpec = swaggerJSDoc(options);
+  return cachedSpec;
+}

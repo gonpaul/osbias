@@ -3,9 +3,7 @@ import { getMessages } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { ReactNode } from 'react';
 import SidebarGate from '@/components/SidebarGate';
-import ReduxProvider from '@/lib/redux/ReduxProvider';
-import SessionBootstrap from '@/lib/redux/SessionBootstrap';
-import ShortcutsHelp from '@/components/ShortcutsHelp';
+import ClientProviders from '@/components/ClientProviders';
 import { locales, type Locale } from '@/i18n';
 
 type Props = {
@@ -20,6 +18,19 @@ export async function generateMetadata() {
   };
 }
 
+async function fetchMe() {
+  try {
+    const res = await fetch('/api/auth/me', {
+      credentials: 'include',
+      cache: 'no-store',
+    });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
 export default async function LocaleLayout({ children, params }: Props) {
   const { locale } = await params;
 
@@ -28,19 +39,20 @@ export default async function LocaleLayout({ children, params }: Props) {
   }
 
   const messages = await getMessages();
+  const me = await fetchMe();
+
+  const pathname = `/${locale}`;
 
   return (
     <NextIntlClientProvider messages={messages}>
-      <ReduxProvider>
-        <SessionBootstrap />
-        <ShortcutsHelp />
-        <SidebarGate />
+      <ClientProviders>
+        <SidebarGate locale={locale} pathname={pathname} user={me} />
         <div className="flex-1 flex flex-col overflow-hidden">
           <main className="flex-1 overflow-x-hidden overflow-y-auto">
             {children}
           </main>
         </div>
-      </ReduxProvider>
+      </ClientProviders>
     </NextIntlClientProvider>
   );
 }

@@ -1,56 +1,49 @@
-'use client';
-
 import Link from 'next/link';
-import {
-  FaSignOutAlt,
-  FaUsersCog
-} from 'react-icons/fa';
-import { GoPencil } from "react-icons/go";
-import { PiGraphLight } from "react-icons/pi";
-import { BiSolidPyramid } from "react-icons/bi";
-import { GiMountainRoad } from "react-icons/gi";
-import { FaCubes, FaRss } from "react-icons/fa";
-import { clearUser } from '@/lib/redux/slices/authSlice';
-import { usePathname } from 'next/navigation';
-import { useDispatch, useSelector } from 'react-redux';
+import { FaUsersCog } from 'react-icons/fa';
+import { GoPencil } from 'react-icons/go';
+import { BiSolidPyramid } from 'react-icons/bi';
+import { GiMountainRoad } from 'react-icons/gi';
+import { FaCubes, FaRss } from 'react-icons/fa';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
+import SignOutButton from '@/components/SignOutButton';
 
-export default function Sidebar() {
-  const pathname = usePathname();
-  const dispatch = useDispatch();
+type SidebarUser = {
+  id: number;
+  name?: string | null;
+  nickname?: string | null;
+  email?: string;
+  picture?: string | null;
+  role?: 'user' | 'admin';
+} | null;
+
+type Props = {
+  locale: string;
+  pathname: string;
+  user: SidebarUser;
+};
+
+export default function Sidebar({ locale, pathname, user }: Props) {
   const t = useTranslations('Nav');
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const user = useSelector((state: any) => state.auth?.user)
 
   const navigation = [
-    { name: t('editor'), href: '/', icon: GoPencil},
-    { name: t('feed'), href: '/feed', icon: FaRss},
-    { name: t('frameworks'), href: '/frameworks', icon: FaCubes},
-    { name: t('goals'), href: '/goals-system', icon: GiMountainRoad},
+    { name: t('editor'), href: `/${locale}`, icon: GoPencil },
+    { name: t('feed'), href: `/${locale}/feed`, icon: FaRss },
+    { name: t('frameworks'), href: `/${locale}/frameworks`, icon: FaCubes },
+    { name: t('goals'), href: `/${locale}/goals-system`, icon: GiMountainRoad },
   ];
-
-  const handleSignOut = async () => {
-    try {
-      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
-    } catch {}
-    dispatch(clearUser());
-    if (typeof window !== 'undefined') {
-      window.location.replace('/login')
-    }
-  };
 
   return (
     <div className="group bg-(--dark) absolute top-0 left-0 h-screen w-30 hover:w-100 overflow-x-hidden overflow-y-auto space-y-6 mt-0 pb-7 px-4 hover:px-7 transition-all duration-300 ease-in-out z-30">
       <div className="text-2xl font-semibold text-start ms-3 my-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-        Osbias 
+        Osbias
       </div>
 
       <div className="flex justify-center w-30 px-5 ms-3 mb-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
         <LanguageSwitcher />
       </div>
-      
+
       <nav className="space-y-2 pe-4 border-r-(--secondary)/30 border-r-1 group-hover:border-r-0">
         {navigation.map((item) => {
           const isActive = pathname === item.href;
@@ -59,8 +52,8 @@ export default function Sidebar() {
               key={item.name}
               href={item.href}
               className={`flex items-center group-hover:w-fit group-hover:space-x-8 px-4 group-hover:px-4 py-4 rounded-lg transition-all duration-300 ${
-                isActive 
-                  ? 'bg-(--natural-gray)/40 text-white' 
+                isActive
+                  ? 'bg-(--natural-gray)/40 text-white'
                   : 'text-gray-300 hover:bg-gray-700 hover:text-white'
               }`}
             >
@@ -73,9 +66,9 @@ export default function Sidebar() {
         })}
         {user?.role === 'admin' && (
           <Link
-            href="/admin/users"
+            href={`/${locale}/admin/users`}
             className={`flex items-center group-hover:w-fit group-hover:space-x-8 px-4 group-hover:px-4 py-4 rounded-lg transition-all duration-300 ${
-              pathname === '/admin/users'
+              pathname === `/${locale}/admin/users`
                 ? 'bg-(--natural-gray)/40 text-white'
                 : 'text-gray-300 hover:bg-gray-700 hover:text-white'
             }`}
@@ -87,22 +80,24 @@ export default function Sidebar() {
           </Link>
         )}
       </nav>
-      
+
       <div className="absolute bottom-6 left-0 right-0 px-4 group-hover:px-2">
         {user && (
           <div className="mx-3 mb-12 ps-4 opacity-0 group-hover:opacity-100 hover:bg-(--natural-gray)/40 rounded-xl p-2 transition-colors duration-300">
-            <Link href="/profile" className="block">
+            <Link href={`/${locale}/profile`} className="block">
               <div className="grid grid-cols-4 grid-rows-2 items-center">
                 <div className="row-span-2 col-span-1 me-3 flex items-center justify-center">
                   {user.picture ? (
                     <Image
                       src={user.picture}
-                      alt={user.name || "Profile"}
+                      alt={user.name || 'Profile'}
                       className="w-14 h-14 rounded-full object-cover border-2 border-(--golden)/60"
+                      width={56}
+                      height={56}
                     />
                   ) : (
                     <div className="w-16 h-16 rounded-full bg-gray-600 flex items-center justify-center text-xl text-white border-2 border-(--golden)/60">
-                      {user.name ? user.name[0] : "?"}
+                      {user.name ? user.name[0] : '?'}
                     </div>
                   )}
                 </div>
@@ -116,15 +111,7 @@ export default function Sidebar() {
             </Link>
           </div>
         )}
-        <button
-          onClick={handleSignOut}
-          className="flex items-center px-7 group-hover:ml-4 group-hover:w-80 group-hover:space-x-8 group-hover:px-7 py-6 rounded-lg transition-all duration-300 cursor-pointer text-gray-300 hover:bg-gray-700 hover:text-white"
-        >
-          <FaSignOutAlt className="w-7 h-7 flex-shrink-0" />
-          <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
-            {t('signOut')}
-          </span>
-        </button>
+        <SignOutButton user={user} />
       </div>
     </div>
   );

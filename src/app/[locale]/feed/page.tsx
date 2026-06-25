@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
-import { PostAnswer } from '@/types';
+import type { PostAnswer } from '@/types';
 import PostCard from '@/components/feed/PostCard';
 import FeedClient from '@/components/feed/FeedClient';
 
@@ -29,7 +29,7 @@ async function fetchFeed(page: number, pageSize: number, authorId?: number) {
 async function getMe() {
   const res = await fetch('/api/auth/me', { credentials: 'include' });
   if (!res.ok) return null;
-  return res.json();
+  return await res.json();
 }
 
 export default function FeedPage({ searchParams }: { searchParams: Promise<Search> }) {

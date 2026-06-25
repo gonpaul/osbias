@@ -41,12 +41,10 @@ export default async function LocaleLayout({ children, params }: Props) {
   const messages = await getMessages();
   const me = await fetchMe();
 
-  const pathname = `/${locale}`;
-
   return (
     <NextIntlClientProvider messages={messages}>
       <ClientProviders>
-        <SidebarGate locale={locale} pathname={pathname} user={me} />
+        <SidebarGate locale={locale} user={me} />
         <div className="flex-1 flex flex-col overflow-hidden">
           <main className="flex-1 overflow-x-hidden overflow-y-auto">
             {children}

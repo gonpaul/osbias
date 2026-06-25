@@ -6,58 +6,53 @@ import { defaultLocale, locales } from '@/i18n';
 const intlMiddleware = createMiddleware({
   locales,
   defaultLocale,
-  localePrefix: 'always',
+  localePrefix: 'as-needed',
 });
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // --- Determine route type ---
-
-  // API routes and static assets — skip i18n middleware entirely
-  if (pathname.startsWith('/_next') ||
+  // Static assets — skip entirely
+  if (
+    pathname.startsWith('/_next') ||
     pathname.startsWith('/api') ||
     pathname === '/favicon.ico' ||
-    /\.(png|jpg|svg|ico|css|js|woff2?|ttf)$/.test(pathname)) {
+    /\.(png|jpg|svg|ico|css|js|woff2?|ttf)$/.test(pathname)
+  ) {
     return NextResponse.next();
   }
 
-  // Strip locale prefix for easier matching
+  // Strip locale prefix for matching
   const parts = pathname.split('/').filter(Boolean);
   const first = parts[0] ?? '';
   const isLocalePrefixed = locales.includes(first as typeof locales[number]);
   const rawPath = isLocalePrefixed ? '/' + parts.slice(1).join('/') : pathname;
 
-  // Public routes — accessible to guests without auth
-  const isPublicRoute =
-    rawPath.startsWith('/feed') ||
-    rawPath.startsWith('/p/') ||
-    rawPath.startsWith('/docs');
-
-  // Auth routes — login/register (accessible to guests)
-  const isAuthRoute =
-    rawPath.startsWith('/login') ||
-    rawPath.startsWith('/register');
-
-  // --- Access control ---
-
   const token = req.cookies.get('auth_token')?.value;
 
-  // No auth needed for public and auth routes
-  if (isPublicRoute || isAuthRoute) {
-    return intlMiddleware(req);
+  // Auth routes — redirect to home if already logged in
+  if ((rawPath === '/login' || rawPath === '/register' || rawPath.startsWith('/login/') || rawPath.startsWith('/register/')) && token) {
+    const locale = isLocalePrefixed ? first : defaultLocale;
+    return NextResponse.redirect(new URL(`/${locale}/`, req.url));
   }
 
-  // Everything else requires authentication
-  if (!token) {
+  // Protected routes — redirect to login if not authenticated
+  const isProtected =
+    rawPath === '/' ||
+    rawPath.startsWith('/feed') ||
+    rawPath.startsWith('/frameworks') ||
+    rawPath.startsWith('/goals-system') ||
+    rawPath.startsWith('/profile') ||
+    rawPath.startsWith('/admin');
+
+  if (isProtected && !token) {
     const locale = isLocalePrefixed ? first : defaultLocale;
-    const loginUrl = new URL(`/${locale}/login`, req.url);
-    return NextResponse.redirect(loginUrl);
+    return NextResponse.redirect(new URL(`/${locale}/login`, req.url));
   }
 
   return intlMiddleware(req);
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
 };

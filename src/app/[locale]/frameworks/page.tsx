@@ -1,3 +1,7 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import FrameworkListClient from '@/components/frameworks/FrameworkListClient';
 
 interface Framework {
@@ -45,7 +49,26 @@ async function fetchFrameworks(): Promise<Framework[]> {
   }
 }
 
-export default async function FrameworksPage() {
-  const frameworks = await fetchFrameworks();
+export default function FrameworksPage() {
+  const t = useTranslations('Frameworks');
+  const [frameworks, setFrameworks] = useState<Framework[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    fetchFrameworks().then(data => {
+      setFrameworks(data);
+      setLoading(false);
+    });
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-(--background) flex items-center justify-center">
+        <div className="text-(--foreground) text-lg">{t('loading')}</div>
+      </div>
+    );
+  }
+
   return <FrameworkListClient initialFrameworks={frameworks} />;
 }

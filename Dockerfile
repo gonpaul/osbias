@@ -20,6 +20,7 @@ RUN pnpm run build
 FROM node:22-bookworm-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production
+RUN apt-get update && apt-get install -y sqlite3
 RUN corepack enable && corepack prepare pnpm@10.11.0 --activate
 RUN mkdir -p /app/data
 COPY --from=builder /app/package.json ./

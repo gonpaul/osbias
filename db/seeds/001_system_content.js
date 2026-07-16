@@ -1,4 +1,4 @@
-exports.seed = async function(knex) {
+export async function seed(knex) {
   // Clear existing data
   await knex("similar_frameworks").del();
   await knex("framework_steps").del();
@@ -39,8 +39,8 @@ exports.seed = async function(knex) {
   const insertedFrameworks = await knex("frameworks")
     .insert(frameworks)
     .returning("id");
-    
-  const [fpFrameworkId, oodaFrameworkId, inversionFrameworkId, meceFrameworkId] = 
+
+  const [fpFrameworkId, oodaFrameworkId, inversionFrameworkId, meceFrameworkId] =
     insertedFrameworks.map(row => row.id);
 
   // Insert framework steps

@@ -2,9 +2,9 @@
 import bcrypt from 'bcryptjs'
 /**
  * @param { import("knex").Knex } knex
- * @returns { Promise<void> } 
+ * @returns { Promise<void> }
  */
-exports.seed = async function(knex) {
+export async function seed(knex) {
   const email = 'admin@osbias.local';
   const exists = await knex('users').where({ email }).first();
   if (exists) return;

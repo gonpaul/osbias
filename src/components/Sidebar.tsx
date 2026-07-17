@@ -44,7 +44,7 @@ export default function Sidebar({ locale, pathname, user }: Props) {
         <LanguageSwitcher />
       </div>
 
-      <nav className="space-y-2 pe-4 border-r-(--secondary)/30 border-r-1 group-hover:border-r-0">
+      <nav className="space-y-2 pe-4 border-r-(--darkelbg)/30 border-r-1 group-hover:border-r-0">
         {navigation.map((item) => {
           const isActive = pathname === item.href;
           return (

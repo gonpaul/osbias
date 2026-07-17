@@ -133,7 +133,8 @@ export default function Home() {
         className="grid grid-cols-[340px_1fr_340px] h-full w-full rounded-t-2xl items-start"
       >
         <FileSystem width="mx-auto w-120"></FileSystem>
-          <div id="editor-div" className="flex flex-col bg-(--darkelbg) h-full rounded-t-2xl w-full">
+
+        <div id="editor-div" className="flex flex-col bg-(--darkelbg) h-full rounded-t-2xl w-full">
             <div className="flex flex-row justify-between rounded-3xl items-center-safe my-4 pt-6 pb-8 px-30 w-full sticky -top-0 z-20 bg-(--darkelbg) bg-opacity-90 backdrop-blur-sm shadow-[16px_8px_24px_4px_rgba(0,0,0,0.11)]">
               <div className="flex min-w-0 items-center justify-start flex-1">
                 <button

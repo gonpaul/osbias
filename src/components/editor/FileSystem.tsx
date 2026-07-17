@@ -195,7 +195,7 @@ const FileSystem: React.FC<FileSystemProps> = memo(({
       >
         <div
           className={`
-            flex items-center py-1 px-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-(--darkelbg) w-full min-w-0 group
+            flex items-center py-1 px-2 cursor-pointer hover:bg-(--natural-gray) hover:bg-(--darkelbg) w-full min-w-0 group
             ${depth > 0 ? 'ml-4' : ''}
           `}
           style={{ paddingLeft: `${depth * 16 + 8}px` }}
@@ -283,7 +283,7 @@ const FileSystem: React.FC<FileSystemProps> = memo(({
   return (
     <div className={`${width} overflow-hidden ml-30 mt-10 h-full bg-(--background) border-none flex flex-col ${className}`}>
       {/* Search Bar */}
-      <div className="w-full p-4 border-b border-gray-200 dark:border-none">
+      <div className="w-full p-4 border-none">
         <div className="flex gap-1 w-full rounded-lg">
           <input
             type="text"
@@ -302,7 +302,7 @@ const FileSystem: React.FC<FileSystemProps> = memo(({
       </div>
 
       {/* New Button Only */}
-      <div className="flex items-center gap-2 px-4 py-2 border-b border-gray-200 dark:border-none">
+      <div className="flex items-center gap-2 px-4 py-2 border-none">
         <button
           className="cursor-pointer px-3 py-1 rounded bg-(--emphasis) text-white text-sm hover:opacity-80"
           onClick={createNew}
@@ -312,7 +312,7 @@ const FileSystem: React.FC<FileSystemProps> = memo(({
       </div>
 
       {/* File System Tree */}
-      <div className="flex-1 overflow-y-auto p-2 w-full">
+      <div className="flex-1 overflow-y-auto p-2 w-full ">
         {loading ? (
           <div className="text-center text-gray-500 dark:text-gray-400 py-8">
             {t('loading')}

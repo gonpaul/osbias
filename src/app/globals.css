@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 :root {
+  /* Dark theme (default) */
   --background: #191818;
   --foreground: #f2f2f2;
   --secondary: #5C5C5C;
@@ -9,22 +10,15 @@
   --darkelbg: #292929;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-
-  /* --background: #ffffff; */
-  /* --background: #F2F2F2;
-  --foreground: #191818; */
   --gray-500: #E5E5E5;
-  /* --emphasis: #BD844F; */
   --emphasis: #364153;
-  /* text-blue-300/80 */
   --emphasis-light: oklch(80.9% 0.105 251.813);
+  --ring: var(--golden);
   --dark: #191818;
-  --secondary: #5C5C5C;
   --yellow: #FDF172;
   --metro-red-line: #D6083B;
   --pearl-bush: #ECE6DF;
   --westar: #DBD7CF;
-  --natural-gray: #95908D;
   --carara: #EAE7E1;
   --green: #67c059;
   --brand-blue: #3093e1;
@@ -32,6 +26,24 @@
 
   /* sizing */
   --page-header-size: 58px;
+}
+
+/* Light theme variants - minimalistic variant (matching saas-template/guildgrad) */
+.theme-light {
+  --background: #ffffff;
+  --foreground: #171717;
+  --secondary: #6b7280;
+  --darkelbg: #f8f8f8;
+  --color-background: #ffffff;
+  --color-foreground: #171717;
+  --emphasis: #BF9270;
+  --emphasis-light: #a68b2e;
+  --ring: var(--emphasis);
+  --golden: var(--secondary);
+  --panelbg: #ffffff;
+  --transparent: transparent;
+  --dark: #f8f8f8;
+  color-scheme: light;
 }
 
 @theme inline {
@@ -43,19 +55,6 @@
   --font-mono: var(--font-geist-mono);
   --spacing: 2px;
 }
-
-/* @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #191818;
-    --foreground: #f2f2f2;
-    --secondary: #5C5C5C;
-    --natural-gray: #95908D;
-    --golden: #f9dc72;
-    --darkelbg: #292929;
-    --color-background: var(--background);
-    --color-foreground: var(--foreground);
-  }
-} */
 
 body {
   background: var(--background);

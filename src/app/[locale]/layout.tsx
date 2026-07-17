@@ -5,6 +5,10 @@ import { ReactNode } from 'react';
 import SidebarGate from '@/components/SidebarGate';
 import ClientProviders from '@/components/ClientProviders';
 import { locales, type Locale } from '@/i18n';
+import { verifyToken } from '@/lib/auth';
+import db from '@/lib/db';
+import type { User } from '@/models/user';
+import { cookies } from 'next/headers';
 
 type Props = {
   children: ReactNode;
@@ -18,14 +22,17 @@ export async function generateMetadata() {
   };
 }
 
-async function fetchMe() {
+async function getMe() {
   try {
-    const res = await fetch('/api/auth/me', {
-      credentials: 'include',
-      cache: 'no-store',
-    });
-    if (!res.ok) return null;
-    return await res.json();
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth_token')?.value;
+    if (!token) return null;
+    
+    const payload = verifyToken(token);
+    if (!payload) return null;
+    
+    const user = await db<User>('users').where({ id: payload.id }).first();
+    return user ? { id: user.id, name: user.name, email: user.email, role: user.role } : null;
   } catch {
     return null;
   }
@@ -39,7 +46,7 @@ export default async function LocaleLayout({ children, params }: Props) {
   }
 
   const messages = await getMessages();
-  const me = await fetchMe();
+  const me = await getMe();
 
   return (
     <NextIntlClientProvider messages={messages}>

@@ -35,8 +35,8 @@ export default function Sidebar({ locale, pathname, user }: Props) {
   ];
 
   return (
-    <div className="group bg-(--dark) absolute top-0 left-0 h-screen w-30 hover:w-100 overflow-x-hidden overflow-y-auto space-y-6 mt-0 pb-7 px-4 hover:px-7 transition-all duration-300 ease-in-out z-30">
-      <div className="text-2xl font-semibold text-start ms-3 my-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+    <div className="group bg-(--background) absolute top-0 left-0 h-screen w-30 hover:w-100 overflow-x-hidden overflow-y-auto space-y-6 mt-0 pb-7 px-4 hover:px-7 transition-all duration-300 ease-in-out z-30">
+      <div className="text-2xl font-semibold text-start ms-3 my-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-(--foreground)">
         Osbias
       </div>
 
@@ -44,7 +44,7 @@ export default function Sidebar({ locale, pathname, user }: Props) {
         <LanguageSwitcher />
       </div>
 
-      <nav className="space-y-2 pe-4 border-r-(--darkelbg)/30 border-r-1 group-hover:border-r-0">
+      <nav className="space-y-2 pe-4 border-r-(--secondary)/30 border-r-1 group-hover:border-r-0">
         {navigation.map((item) => {
           const isActive = pathname === item.href;
           return (
@@ -53,12 +53,12 @@ export default function Sidebar({ locale, pathname, user }: Props) {
               href={item.href}
               className={`flex items-center group-hover:w-fit group-hover:space-x-8 px-4 group-hover:px-4 py-4 rounded-lg transition-all duration-300 ${
                 isActive
-                  ? 'bg-(--natural-gray)/40 text-white'
-                  : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                  ? 'bg-(--golden)/20 text-(--foreground)'
+                  : 'text-(--secondary) hover:bg-(--golden)/10 hover:text-(--foreground)'
               }`}
             >
               <item.icon className="w-10 h-10 flex-shrink-0" />
-              <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
+              <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap text-(--foreground)">
                 {item.name}
               </span>
             </Link>
@@ -69,12 +69,12 @@ export default function Sidebar({ locale, pathname, user }: Props) {
             href={`/${locale}/admin/users`}
             className={`flex items-center group-hover:w-fit group-hover:space-x-8 px-4 group-hover:px-4 py-4 rounded-lg transition-all duration-300 ${
               pathname === `/${locale}/admin/users`
-                ? 'bg-(--natural-gray)/40 text-white'
-                : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                ? 'bg-(--golden)/20 text-(--foreground)'
+                : 'text-(--secondary) hover:bg-(--golden)/10 hover:text-(--foreground)'
             }`}
           >
             <FaUsersCog className="w-10 h-10 flex-shrink-0" />
-            <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
+            <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap text-(--foreground)">
               {t('admin')}
             </span>
           </Link>
@@ -83,7 +83,7 @@ export default function Sidebar({ locale, pathname, user }: Props) {
 
       <div className="absolute bottom-6 left-0 right-0 px-4 group-hover:px-2">
         {user && (
-          <div className="mx-3 mb-12 ps-4 opacity-0 group-hover:opacity-100 hover:bg-(--natural-gray)/40 rounded-xl p-2 transition-colors duration-300">
+          <div className="mx-3 mb-12 ps-4 opacity-0 group-hover:opacity-100 hover:bg-(--golden)/10 rounded-xl p-2 transition-colors duration-300">
             <Link href={`/${locale}/profile`} className="block">
               <div className="grid grid-cols-4 grid-rows-2 items-center">
                 <div className="row-span-2 col-span-1 me-3 flex items-center justify-center">
@@ -96,7 +96,7 @@ export default function Sidebar({ locale, pathname, user }: Props) {
                       height={56}
                     />
                   ) : (
-                    <div className="w-16 h-16 rounded-full bg-gray-600 flex items-center justify-center text-xl text-white border-2 border-(--golden)/60">
+                    <div className="w-16 h-16 rounded-full bg-(--darkelbg) flex items-center justify-center text-xl text-(--foreground) border-2 border-(--golden)/60">
                       {user.name ? user.name[0] : '?'}
                     </div>
                   )}

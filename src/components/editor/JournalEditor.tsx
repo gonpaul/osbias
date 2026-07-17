@@ -286,7 +286,7 @@ function CMEditor({
       if (text && view) {
         const selection = view.state.selection.main;
         const docLength = view.state.doc.length;
-        
+
         // Determine insertion position:
         // 1. If there's a selection (selected text), replace it
         // 2. If cursor is at position 0 and no selection, insert at end
@@ -472,10 +472,10 @@ function CMEditor({
       private selectionTo: number;
       private onClose: () => void;
       private root: Root | null = null;
-      
+
       constructor(
-        view: EditorView, 
-        originalText: string, 
+        view: EditorView,
+        originalText: string,
         biasScore: number,
         biasExplanation: string,
         selectionFrom: number,
@@ -491,15 +491,15 @@ function CMEditor({
         this.selectionTo = selectionTo;
         this.onClose = onClose;
       }
-      
+
       eq(other: BiasWidget) {
-        return other.originalText === this.originalText && 
+        return other.originalText === this.originalText &&
                other.biasScore === this.biasScore &&
                other.biasExplanation === this.biasExplanation &&
                other.selectionFrom === this.selectionFrom &&
                other.selectionTo === this.selectionTo;
       }
-      
+
       toDOM() {
         const container = document.createElement('div');
         container.setAttribute('contenteditable', 'false');
@@ -518,20 +518,20 @@ function CMEditor({
 
         const BiasResult = () => {
           // Ensure biasScore is a valid number between 0 and 1
-          const validBiasScore = isNaN(this.biasScore) || this.biasScore < 0 || this.biasScore > 1 
-            ? 0.5 
+          const validBiasScore = isNaN(this.biasScore) || this.biasScore < 0 || this.biasScore > 1
+            ? 0.5
             : this.biasScore;
-          
+
           // Calculate color based on bias score (0 = green, 1 = red)
           const red = Math.round(255 * validBiasScore);
           const green = Math.round(255 * (1 - validBiasScore));
           const color = `rgb(${red}, ${green}, 0)`;
-          
+
           return (
             <div className="flex flex-col gap-3">
               <div className="text-xs text-gray-400 mb-1">{t('biasAnalysis')}</div>
               <div className="flex items-center gap-3">
-                <div 
+                <div
                   className="w-15 h-15 rounded-full flex items-center justify-center text-white font-bold text-sm"
                   style={{ backgroundColor: color }}
                 >
@@ -570,7 +570,7 @@ function CMEditor({
         this.root.render(<BiasResult />);
         return container;
       }
-      
+
       destroy(dom: HTMLElement) {
         const root = this.root;
         this.root = null;
@@ -579,7 +579,7 @@ function CMEditor({
         }
         super.destroy(dom);
       }
-      
+
       ignoreEvent() { return true; }
     }
 
@@ -591,10 +591,10 @@ function CMEditor({
       private selectionTo: number;
       private onClose: () => void;
       private root: Root | null = null;
-      
+
       constructor(
-        view: EditorView, 
-        originalText: string, 
+        view: EditorView,
+        originalText: string,
         paraphrasedText: string,
         selectionFrom: number,
         selectionTo: number,
@@ -608,14 +608,14 @@ function CMEditor({
         this.selectionTo = selectionTo;
         this.onClose = onClose;
       }
-      
+
       eq(other: ParaphraseWidget) {
-        return other.originalText === this.originalText && 
+        return other.originalText === this.originalText &&
                other.paraphrasedText === this.paraphrasedText &&
                other.selectionFrom === this.selectionFrom &&
                other.selectionTo === this.selectionTo;
       }
-      
+
       toDOM() {
         const container = document.createElement('div');
         container.setAttribute('contenteditable', 'false');
@@ -646,10 +646,10 @@ function CMEditor({
                     e.preventDefault();
                     e.stopPropagation();
                     const tr = this.view.state.update({
-                      changes: { 
-                        from: this.selectionFrom, 
-                        to: this.selectionTo, 
-                        insert: this.paraphrasedText 
+                      changes: {
+                        from: this.selectionFrom,
+                        to: this.selectionTo,
+                        insert: this.paraphrasedText
                       },
                       selection: { anchor: this.selectionFrom + this.paraphrasedText.length }
                     });
@@ -679,7 +679,7 @@ function CMEditor({
         this.root.render(<ParaphraseResult />);
         return container;
       }
-      
+
       destroy(dom: HTMLElement) {
         const root = this.root;
         this.root = null;
@@ -688,7 +688,7 @@ function CMEditor({
         }
         super.destroy(dom);
       }
-      
+
       ignoreEvent() { return true; }
     }
 
@@ -718,10 +718,10 @@ function CMEditor({
       private selectionTo: number;
       private onClose: () => void;
       private root: Root | null = null;
-      
+
       constructor(
-        view: EditorView, 
-        originalText: string, 
+        view: EditorView,
+        originalText: string,
         validationResult: ValidationResult,
         selectionFrom: number,
         selectionTo: number,
@@ -735,14 +735,14 @@ function CMEditor({
         this.selectionTo = selectionTo;
         this.onClose = onClose;
       }
-      
+
       eq(other: IdeaValidationWidget) {
-        return other.originalText === this.originalText && 
+        return other.originalText === this.originalText &&
                JSON.stringify(other.validationResult) === JSON.stringify(this.validationResult) &&
                other.selectionFrom === this.selectionFrom &&
                other.selectionTo === this.selectionTo;
       }
-      
+
       toDOM() {
         const container = document.createElement('div');
         container.style.margin = '8px 0';
@@ -860,7 +860,7 @@ function CMEditor({
         this.root.render(<ValidationResult />);
         return container;
       }
-      
+
       destroy(dom: HTMLElement) {
         const root = this.root;
         this.root = null;
@@ -869,7 +869,7 @@ function CMEditor({
         }
         super.destroy(dom);
       }
-      
+
       ignoreEvent() { return true; }
     }
 
@@ -878,16 +878,16 @@ function CMEditor({
       private onClose: () => void;
       private onUnlock?: () => void;
       private root: Root | null = null;
-      
+
       constructor(view: EditorView, onClose: () => void, onUnlock?: () => void) {
         super();
         this.view = view;
         this.onClose = onClose;
         this.onUnlock = onUnlock;
       }
-      
+
       eq() { return true; }
-      
+
       toDOM() {
         const container = document.createElement('div');
         const root = createRoot(container);
@@ -927,7 +927,7 @@ function CMEditor({
         const HelloContent = () => {
           return (
             <div className="flex flex-col w-9/10 items-center mx-auto py-6 my-4 bg-(--darkelbg) gap-6">
-              <div className="text-xl max-w-2xl text-gray-300 text-center">
+              <div className="text-xl max-w-2xl text-(--secondary) text-center">
                 <TypewriterText text={t('welcomeEntry')} />
               </div>
 
@@ -986,7 +986,7 @@ function CMEditor({
         this.root.render(<HelloContent />);
         return container;
       }
-      
+
       destroy(dom: HTMLElement) {
         const root = this.root;
         this.root = null;
@@ -995,7 +995,7 @@ function CMEditor({
         }
         super.destroy(dom);
       }
-      
+
       ignoreEvent() { return true; }
     }
 
@@ -1024,16 +1024,16 @@ function CMEditor({
           block: true,
           side: 1,
         }).range(to);
-        
+
         // Insert loading widget and restore selection immediately
         const biasLoadingOriginalSelection = view.state.selection;
         view.dispatch({ effects: [effectsRef.current!.clearPopups.of(null), effectsRef.current!.addPopup.of(loadingDeco)] });
         view.dispatch({ selection: biasLoadingOriginalSelection, scrollIntoView: false });
         view.focus();
-        
+
         // Get user preferences
         const userPrefs = await fetchUserPreferences();
-        
+
         // Call the AI API for bias analysis
         const res = await fetch('/api/ai', {
           method: 'POST',
@@ -1047,19 +1047,19 @@ function CMEditor({
             maxTokens: userPrefs.maxTokens,
           })
         });
-        
+
         if (!res.ok) {
           const errData = await res.json().catch(() => ({}));
           throw new Error(errData.error || `Bias analysis failed (${res.status})`);
         }
-        
+
         const data = await res.json() as { text: string };
         const responseText = data.text.trim();
-        
+
         // Parse the JSON response
         let biasScore: number;
         let biasExplanation: string;
-        
+
         try {
           // Extract JSON from markdown code blocks if present
           let jsonText = responseText;
@@ -1067,10 +1067,10 @@ function CMEditor({
           if (codeBlockMatch) {
             jsonText = codeBlockMatch[1].trim();
           }
-          
+
           const parsed = JSON.parse(jsonText);
           const rawScore = parsed.biasScore;
-          
+
           // Validate and normalize the bias score
           if (typeof rawScore === 'number' && !isNaN(rawScore)) {
             biasScore = Math.max(0, Math.min(1, rawScore));
@@ -1080,25 +1080,25 @@ function CMEditor({
           } else {
             biasScore = 0.5; // Default fallback
           }
-          
+
           biasExplanation = parsed.explanation || 'No explanation provided.';
         } catch (parseError) {
           // Fallback parsing if JSON parsing fails
           console.warn('Failed to parse bias analysis JSON:', parseError);
-          
+
           // Try to extract bias score from the text (look for patterns like "0.7", "70%", "score: 0.8", etc.)
           const scorePatterns = [
             /(?:bias\s+)?score[:\s]*([0-9.]+)/i,
             /([0-9.]+)\s*(?:out\s+of\s+1|\/1|%)/i,
             /(?:score|bias)[:\s]*([0-9.]+)/i
           ];
-          
+
           let scoreMatch = null;
           for (const pattern of scorePatterns) {
             scoreMatch = responseText.match(pattern);
             if (scoreMatch) break;
           }
-          
+
           if (scoreMatch) {
             let extractedScore = parseFloat(scoreMatch[1]);
             // If the score is a percentage (like 70), convert to decimal (0.7)
@@ -1110,23 +1110,23 @@ function CMEditor({
             // Default to 0.5 if no score found
             biasScore = 0.5;
           }
-          
+
           // Use the full response as explanation, but clean it up
           biasExplanation = responseText
             .replace(/^(?:bias\s+)?(?:analysis|score)[:\s]*/i, '')
             .replace(/^\d+[.\d]*\s*(?:out\s+of\s+1|\/1|%)?\s*/i, '')
             .trim() || 'Bias analysis completed.';
         }
-        
+
         // Replace loading with bias result
         const biasDeco = Decoration.widget({
           widget: new BiasWidget(
-            view, 
-            text, 
+            view,
+            text,
             biasScore,
             biasExplanation,
-            from, 
-            to, 
+            from,
+            to,
             () => {
               view.dispatch({ effects: [effectsRef.current!.clearPopups.of(null)] });
               Promise.resolve().then(() => view.focus());
@@ -1135,13 +1135,13 @@ function CMEditor({
           block: true,
           side: 1,
         }).range(to);
-        
+
         // Insert widget and restore selection immediately
         const biasOriginalSelection = view.state.selection;
         view.dispatch({ effects: [effectsRef.current!.clearPopups.of(null), effectsRef.current!.addPopup.of(biasDeco)] });
         view.dispatch({ selection: biasOriginalSelection, scrollIntoView: false });
         view.focus();
-        
+
       } catch (error) {
         console.error('Bias analysis error:', error);
         // Show error state
@@ -1163,7 +1163,7 @@ function CMEditor({
           block: true,
           side: 1,
         }).range(from);
-        
+
         view.dispatch({ effects: [effectsRef.current!.clearPopups.of(null), effectsRef.current!.addPopup.of(errorDeco)] });
       }
     };
@@ -1193,16 +1193,16 @@ function CMEditor({
           block: true,
           side: -1,
         }).range(from);
-        
+
         // Insert loading widget and restore selection immediately
         const loadingOriginalSelection = view.state.selection;
         view.dispatch({ effects: [effectsRef.current!.clearPopups.of(null), effectsRef.current!.addPopup.of(loadingDeco)] });
         view.dispatch({ selection: loadingOriginalSelection, scrollIntoView: false });
         view.focus();
-        
+
         // Get user preferences
         const userPrefs = await fetchUserPreferences();
-        
+
         // Call the AI API for paraphrasing
         const res = await fetch('/api/ai', {
           method: 'POST',
@@ -1216,7 +1216,7 @@ function CMEditor({
             maxTokens: userPrefs.maxTokens,
           })
         });
-        
+
         if (!res.ok) {
           let errMsg = `Paraphrasing failed (${res.status})`;
           try {
@@ -1228,18 +1228,18 @@ function CMEditor({
           }
           throw new Error(errMsg);
         }
-        
+
         const data = await res.json() as { text: string };
         const paraphrasedText = data.text.trim();
-        
+
         // Replace loading with paraphrase result
         const paraphraseDeco = Decoration.widget({
           widget: new ParaphraseWidget(
-            view, 
-            text, 
-            paraphrasedText, 
-            from, 
-            to, 
+            view,
+            text,
+            paraphrasedText,
+            from,
+            to,
             () => {
               view.dispatch({ effects: [effectsRef.current!.clearPopups.of(null)] });
               Promise.resolve().then(() => view.focus());
@@ -1248,13 +1248,13 @@ function CMEditor({
           block: true,
           side: -1,
         }).range(from);
-        
+
         // Insert widget and immediately restore original selection to avoid including widget
         const originalSelection = view.state.selection;
         view.dispatch({ effects: [effectsRef.current!.clearPopups.of(null), effectsRef.current!.addPopup.of(paraphraseDeco)] });
         view.dispatch({ selection: originalSelection, scrollIntoView: false });
         view.focus();
-        
+
       } catch (error) {
         console.error('Paraphrasing error:', error);
         // Show error state
@@ -1276,7 +1276,7 @@ function CMEditor({
           block: true,
           side: 1,
         }).range(from);
-        
+
         view.dispatch({ effects: [effectsRef.current!.clearPopups.of(null), effectsRef.current!.addPopup.of(errorDeco)] });
       }
     };
@@ -1306,16 +1306,16 @@ function CMEditor({
           block: true,
           side: 1,
         }).range(to);
-        
+
         // Insert loading widget and restore selection immediately
         const validationLoadingOriginalSelection = view.state.selection;
         view.dispatch({ effects: [effectsRef.current!.clearPopups.of(null), effectsRef.current!.addPopup.of(loadingDeco)] });
         view.dispatch({ selection: validationLoadingOriginalSelection, scrollIntoView: false });
         view.focus();
-        
+
         // Get user preferences
         const userPrefs = await fetchUserPreferences();
-        
+
         // Call the AI API for idea validation
         const res = await fetch('/api/ai', {
           method: 'POST',
@@ -1329,20 +1329,20 @@ function CMEditor({
             maxTokens: userPrefs.maxTokens,
           })
         });
-        
+
         if (!res.ok) {
           const errData = await res.json().catch(() => ({}));
           throw new Error(errData.error || `Idea validation failed (${res.status})`);
         }
-        
+
         const data = await res.json() as { text: string };
         const responseText = data.text.trim();
         console.log(data);
         console.log(responseText);
-        
+
         // Parse the JSON response
         let validationResult: ValidationResult;
-        
+
         try {
           // Extract JSON from markdown code blocks if present
           let jsonText = responseText;
@@ -1350,14 +1350,14 @@ function CMEditor({
           if (codeBlockMatch) {
             jsonText = codeBlockMatch[1].trim();
           }
-          
+
           const parsed = JSON.parse(jsonText);
-          
+
           // Validate the structure
           if (!parsed.steps || !Array.isArray(parsed.steps)) {
             throw new Error('Invalid response structure');
           }
-          
+
           // Ensure all steps have required fields
           const steps = parsed.steps.map((step: Record<string, unknown>, index: number) => ({
             id: (typeof step.id === 'string' ? step.id : `step_${index + 1}`),
@@ -1368,7 +1368,7 @@ function CMEditor({
             dependencies: Array.isArray(step.dependencies) ? step.dependencies as string[] : [],
             environment: (typeof step.environment === 'string' ? step.environment : 'General')
           }));
-          
+
           validationResult = {
             overallValid: Boolean(parsed.overallValid),
             steps: steps,
@@ -1378,7 +1378,7 @@ function CMEditor({
         } catch (parseError) {
           // Fallback parsing if JSON parsing fails
           console.warn('Failed to parse idea validation JSON:', parseError);
-          
+
           // Create a fallback validation result
           validationResult = {
             overallValid: false,
@@ -1395,7 +1395,7 @@ function CMEditor({
             recommendations: ['Try rephrasing your idea or try again later']
           };
         }
-        
+
         // Save validation history
         try {
           await fetch('/api/validation-history', {
@@ -1416,7 +1416,7 @@ function CMEditor({
           console.warn('Failed to save validation history:', historyError);
           // Don't fail the validation if history saving fails
         }
-        
+
         // Replace loading with validation result
         const resultDeco = Decoration.widget({
           widget: new IdeaValidationWidget(
@@ -1433,16 +1433,16 @@ function CMEditor({
           block: true,
           side: 1,
         }).range(to);
-        
+
         // Insert widget and restore selection immediately
         const validationOriginalSelection = view.state.selection;
         view.dispatch({ effects: [effectsRef.current!.clearPopups.of(null), effectsRef.current!.addPopup.of(resultDeco)] });
         view.dispatch({ selection: validationOriginalSelection, scrollIntoView: false });
         view.focus();
-        
+
       } catch (error) {
         console.error('Idea validation error:', error);
-        
+
         // Show error state
         const errorDeco = Decoration.widget({
           widget: new (class extends WidgetType {
@@ -1462,7 +1462,7 @@ function CMEditor({
           block: true,
           side: 1,
         }).range(from);
-        
+
         view.dispatch({ effects: [effectsRef.current!.clearPopups.of(null), effectsRef.current!.addPopup.of(errorDeco)] });
       }
     };
@@ -1470,10 +1470,10 @@ function CMEditor({
     const handleBiasCheckRequest = async () => {
       const view = viewRef.current;
       if (!view) return;
-      
+
       const sel = view.state.selection.main;
       const selectedText = view.state.doc.sliceString(sel.from, sel.to);
-      
+
       if (!selectedText.trim()) {
         // No text selected, ask user for confirmation to analyze entire content
         const fullContent = view.state.doc.toString();
@@ -1496,10 +1496,10 @@ function CMEditor({
     const handleParaphraseRequest = async () => {
       const view = viewRef.current;
       if (!view) return;
-      
+
       const sel = view.state.selection.main;
       const selectedText = view.state.doc.sliceString(sel.from, sel.to);
-      
+
       if (!selectedText.trim()) {
         // No text selected, ask user for confirmation to paraphrase entire content
         const fullContent = view.state.doc.toString();
@@ -1522,10 +1522,10 @@ function CMEditor({
     const handleIdeaValidationRequest = async () => {
       const view = viewRef.current;
       if (!view) return;
-      
+
       const sel = view.state.selection.main;
       const selectedText = view.state.doc.sliceString(sel.from, sel.to);
-      
+
       if (!selectedText.trim()) {
         // No text selected, ask user for confirmation to validate entire content
         const fullContent = view.state.doc.toString();
@@ -1548,7 +1548,7 @@ function CMEditor({
     const handleHelloWidgetRequest = async () => {
       const view = viewRef.current;
       if (!view) return;
-      
+
       // Show the hello widget at the beginning of the document
       const helloDeco = Decoration.widget({
         widget: new HelloWidget(
@@ -1562,10 +1562,10 @@ function CMEditor({
         block: true,
         side: 1,
       }).range(0);
-      
+
       view.dispatch({ effects: [effectsRef.current!.clearPopups.of(null), effectsRef.current!.addPopup.of(helloDeco)] });
     };
-    
+
     const offBias = onUIEvent('bias-check-request', () => handleBiasCheckRequest());
     const offPara = onUIEvent('paraphrase-request', () => handleParaphraseRequest());
     const offIdea = onUIEvent('idea-validation-request', () => handleIdeaValidationRequest());
@@ -1596,7 +1596,7 @@ function CMInlineChat({ selectedText, onClose, onResult, t }: { selectedText: st
   const [selectedModel, setSelectedModel] = useState<string>('');
   const [maxTokens, setMaxTokens] = useState<number>(512);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
-  
+
   useEffect(() => {
     inputRef.current?.focus();
     if (inputRef.current) {
@@ -1604,7 +1604,7 @@ function CMInlineChat({ selectedText, onClose, onResult, t }: { selectedText: st
       inputRef.current.style.height = inputRef.current.scrollHeight + 'px';
     }
   }, []);
-  
+
   // Fetch user AI preferences
   useEffect(() => {
     const fetchUserPrefs = async () => {
@@ -1772,7 +1772,7 @@ export default function JournalEditor() {
   // Dismiss starter inline panel for current blank draft
   const [starterDismissed, setStarterDismissed] = useState(false);
   const [starterVisible, setStarterVisible] = useState(false);
-  
+
   // Seed a blank draft for brand-new users (no entries yet)
 
   // Validation history state
@@ -1793,8 +1793,8 @@ export default function JournalEditor() {
 
   // Announce when a brand-new blank draft is opened so the UI can show template chooser
   useEffect(() => {
-    const isBlankDraft = !!current && 
-      (title.trim().length === 0 || title.trim().toLowerCase() === 'untitled') && 
+    const isBlankDraft = !!current &&
+      (title.trim().length === 0 || title.trim().toLowerCase() === 'untitled') &&
       (content.trim().length === 0);
     if (isBlankDraft && !announcedBlankRef.current) {
       emitUIEvent('blank-entry-opened');
@@ -1825,7 +1825,7 @@ export default function JournalEditor() {
   useEffect(() => {
     // Only proceed if loading is complete
     if (entriesLoading) return;
-    
+
     if (!current && entries.length === 0) {
       const isTitleBlank = (title || '').trim().length === 0 || (title || '').trim().toLowerCase() === 'untitled';
       const isContentBlank = (content || '').trim().length === 0;
@@ -1848,7 +1848,7 @@ export default function JournalEditor() {
     });
     return () => off();
   }, []);
-  
+
   // Reset starter dismissed state when switching to a new entry
   useEffect(() => {
     if (current?.id === -1) {
@@ -1863,10 +1863,10 @@ export default function JournalEditor() {
       // Create framework template content
       const frameworkContent = `# ${framework.name}\n\n${framework.description}\n\n## Framework Steps\n\n${framework.steps
         .sort((a: { step_order: number }, b: { step_order: number }) => a.step_order - b.step_order)
-        .map((step: { step_order: number; title: string; description?: string }) => 
+        .map((step: { step_order: number; title: string; description?: string }) =>
           `### Step ${step.step_order}: ${step.title}\n\n${step.description || 'No description provided.'}\n\n---\n\n`
         ).join('')}`;
-      
+
       // Dispatch event to CodeMirror editor to insert at cursor position
       emitUIEvent('insert-text-at-cursor', { text: frameworkContent });
     }
@@ -1874,7 +1874,7 @@ export default function JournalEditor() {
 
   const createNewEntryWithFramework = useCallback(async (frameworkId: number, content: string, title: string) => {
     console.log('Creating new entry with framework:', { frameworkId, title, content: content.substring(0, 100) + '...' });
-    
+
     // Create new journal entry with framework content
     const draft: JournalEntry = {
       id: -1,
@@ -1883,12 +1883,12 @@ export default function JournalEditor() {
       title: title,
       content: content
     };
-    
+
     // Add the new entry to the entries list so it appears in FileSystem
     dispatch(setEntries([draft, ...entries]));
     dispatch(setCurrent(draft));
     dispatch(setSaveState('idle'));
-    
+
     console.log('New entry created and set as current');
   }, [dispatch, entries]);
 
@@ -1920,7 +1920,7 @@ export default function JournalEditor() {
 
       // Create the file content with title and content
       const fileContent = `# ${title}\n\n${content}`;
-      
+
       // Create a blob and download it
       const blob = new Blob([fileContent], { type: 'text/markdown' });
       const url = URL.createObjectURL(blob);
@@ -1972,7 +1972,7 @@ export default function JournalEditor() {
       setStarterDismissed(true);
       scheduleSave();
     });
-    
+
     return () => {
       offInsertFramework();
       offCreateEntry();
@@ -1997,10 +1997,10 @@ export default function JournalEditor() {
   const saveNow = async () => {
     if (!dirtyRef.current) return;
     dispatch(setSaveState('saving'));
-    
+
     // Store current state for potential rollback
     const backupEntry = current;
-    
+
     try {
       // Always use the latest value at save time
       const saveTitle = latestTitleRef.current;
@@ -2190,13 +2190,13 @@ export default function JournalEditor() {
           dispatch(setTitle(newTitle));
           // Update ref immediately so saveNow always gets latest
           latestTitleRef.current = newTitle;
-          
+
           // IMMEDIATELY update the entry in the entries list for instant filesystem visibility
           if (current && current.id !== -1) {
             const updatedEntry = { ...current, title: newTitle };
             dispatch(updateEntry(updatedEntry));
           }
-          
+
           scheduleSave();
         }}
       />

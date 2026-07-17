@@ -54,7 +54,7 @@ export default function RegisterPage() {
           <label className="flex flex-col gap-2">
             <span className="text-lg">{t('name')}</span>
             <input
-              className="border border-gray-300 text-lg rounded-md px-3 py-2 bg-white text-[color:var(--secondary)] focus:outline-none focus:ring-2 focus:ring-emphasis"
+              className="border border-gray-300 text-lg rounded-md px-3 py-2 bg-white text-(--secondary) focus:outline-none focus:ring-2 focus:ring-(--golden)"
               value={name}
               onChange={e => setName(e.target.value)}
               autoComplete="name"
@@ -63,7 +63,7 @@ export default function RegisterPage() {
           <label className="flex flex-col gap-2">
             <span className="text-lg">{t('email')}</span>
             <input
-              className="border border-gray-300 text-lg rounded-md px-3 py-2 bg-white text-[color:var(--secondary)] focus:outline-none focus:ring-2 focus:ring-emphasis"
+              className="border border-gray-300 text-lg rounded-md px-3 py-2 bg-white text-(--secondary) focus:outline-none focus:ring-2 focus:ring-(--golden)"
               value={email}
               onChange={e => setEmail(e.target.value)}
               autoComplete="username"
@@ -73,7 +73,7 @@ export default function RegisterPage() {
             <span className="text-lg">{t('password')}</span>
             <input
               type="password"
-              className="border border-gray-300 text-lg rounded-md px-3 py-2 bg-white text-[color:var(--secondary)] focus:outline-none focus:ring-2 focus:ring-emphasis"
+              className="border border-gray-300 text-lg rounded-md px-3 py-2 bg-white text-(--secondary) focus:outline-none focus:ring-2 focus:ring-(--golden)"
               value={password}
               onChange={e => setPassword(e.target.value)}
               autoComplete="new-password"

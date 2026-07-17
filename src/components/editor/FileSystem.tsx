@@ -195,7 +195,7 @@ const FileSystem: React.FC<FileSystemProps> = memo(({
       >
         <div
           className={`
-            flex items-center py-1 px-2 cursor-pointer hover:bg-(--natural-gray) hover:bg-(--darkelbg) w-full min-w-0 group
+            flex items-center py-1 px-2 cursor-pointer hover:bg-(--background) hover:bg-(--darkelbg) w-full min-w-0 group
             ${depth > 0 ? 'ml-4' : ''}
           `}
           style={{ paddingLeft: `${depth * 16 + 8}px` }}

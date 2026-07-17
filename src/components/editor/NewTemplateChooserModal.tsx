@@ -11,11 +11,11 @@ interface NewTemplateChooserModalProps {
   onChooseFrameworkTemplate: () => void;
 }
 
-export default function NewTemplateChooserModal({ 
-  isOpen, 
-  onClose, 
-  onChooseJournalTemplate, 
-  onChooseFrameworkTemplate 
+export default function NewTemplateChooserModal({
+  isOpen,
+  onClose,
+  onChooseJournalTemplate,
+  onChooseFrameworkTemplate
 }: NewTemplateChooserModalProps) {
   const t = useTranslations('Editor');
 
@@ -34,7 +34,7 @@ export default function NewTemplateChooserModal({
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-(--background) border border-(--secondary)/30 rounded-xl p-8 w-full max-w-4xl mx-4">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-semibold text-white">{t('pickTemplate')}</h3>
+          <h3 className="text-xl font-semibold text-(--foreground)">{t('pickTemplate')}</h3>
           <button
             onClick={onClose}
             className="text-(--secondary) hover:text-(--foreground) transition-colors duration-300 cursor-pointer"
@@ -44,7 +44,7 @@ export default function NewTemplateChooserModal({
         </div>
 
         <div className="space-y-6">
-          <p className="text-gray-300 text-center text-lg">
+          <p className="text-(--secondary) text-center text-lg">
             {t('pickTemplateDesc')}
           </p>
 
@@ -59,8 +59,8 @@ export default function NewTemplateChooserModal({
             >
               <div className="text-center">
                 <div className="text-2xl mb-3">📝</div>
-                <div className="text-lg font-semibold text-white mb-2">{t('journalTemplate')}</div>
-                <div className="text-sm text-gray-400">
+                <div className="text-lg font-semibold text-(--foreground) mb-2">{t('journalTemplate')}</div>
+                <div className="text-sm text-(--secondary)">
                   {t('journalTemplateDesc')}
                 </div>
               </div>
@@ -76,16 +76,16 @@ export default function NewTemplateChooserModal({
             >
               <div className="text-center">
                 <div className="text-2xl mb-3">🧠</div>
-                <div className="text-lg font-semibold text-white mb-2">{t('frameworkTemplate')}</div>
-                <div className="text-sm text-gray-400">
+                <div className="text-lg font-semibold text-(--foreground) mb-2">{t('frameworkTemplate')}</div>
+                <div className="text-sm text-(--secondary)">
                   {t('frameworkTemplateDesc')}
                 </div>
               </div>
             </button>
-          </div>{/* 
+          </div>{/*
           <div className="flex gap-2 justify-center">
             <button
-              className="px-4 py-2 rounded bg-(--darkelbg) text-(--foreground) text-sm hover:opacity-80 border border-(--secondary)/30"
+              className="px-4 py-2 rounded bg-(--background) text-(--secondary) text-sm hover:opacity-80 border border-(--secondary)/30"
               onClick={() => {
                 onClose();
               }}

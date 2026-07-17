@@ -135,10 +135,11 @@ export default function Home() {
         <FileSystem width="mx-auto w-120"></FileSystem>
 
         <div id="editor-div" className="flex flex-col bg-(--darkelbg) h-full rounded-t-2xl w-full">
-            <div className="flex flex-row justify-between rounded-3xl items-center-safe my-4 pt-6 pb-8 px-30 w-full sticky -top-0 z-20 bg-(--darkelbg) bg-opacity-90 backdrop-blur-sm shadow-[16px_8px_24px_4px_rgba(0,0,0,0.11)]">
+            <div className="flex flex-row justify-between rounded-3xl items-center-safe mb-4 dark:my-4 pt-6 pb-8 px-30 w-full sticky -top-0 z-20 bg-(--darkelbg) bg-opacity-90 backdrop-blur-sm dark:shadow-[16px_8px_24px_4px_rgba(0,0,0,0.11)] shadow-[4px_4px_8px_4px_rgba(0,0,0,0.03)]">
               <div className="flex min-w-0 items-center justify-start flex-1">
                 <button
-                  className="cursor-pointer me-4 px-6 py-2 rounded-2xl bg-(--secondary)/20 hover:bg-(--dark) hover:opacity-80 transition-colors duration-300"
+                  className="cursor-pointer me-4 px-6 py-2 rounded-2xl bg-(--background)/20 dark:bg-(--secondary)/20 hover:bg-(--secondary)/10 border-1 border-(--secondary)/40
+                    light:text-(--secondary) hover:opacity-80 transition-colors duration-300"
                   title={t('makeTemplate')}
                   onClick={() => setIsQuickMakeTemplateOpen(true)}
                 >
@@ -146,7 +147,7 @@ export default function Home() {
                 </button>
               </div>
               <div className="flex flex-1 justify-center">
-                <ul className="flex flex-row rounded-xl bg-(--secondary)/20 overflow-hidden border-1 border-(--secondary) flex-shrink-0 divide-x divide-(--secondary)">
+                <ul className="flex flex-row rounded-xl bg-(--background)/20 dark:bg-(--secondary)/20 overflow-hidden border-1 border-(--secondary)/40 dark:border-(--secondary)/20 flex-shrink-0 divide-x divide-(--secondary)">
                   <button
                     onClick={handleTemplateClick}
                     className="cursor-pointer pe-4 py-2 rounded-s-md bg-transparent hover:bg-(--dark) hover:opacity-80 transition-colors first:pl-10"
@@ -176,7 +177,7 @@ export default function Home() {
                     {t('paraphrase')}
                   </button>
                   <button
-                    className="cursor-pointer px-4 py-2 rounded bg-transparent hover:bg-(--dark) hover:opacity-80 transition-colors rounded-e-md disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="cursor-pointer px-4 py-2 rounded bg-transparent light:hover:bg-(--foreground) hover:bg-(--dark) hover:opacity-80 transition-colors rounded-e-md disabled:opacity-50 disabled:cursor-not-allowed"
                     disabled={allowPosting === false}
                     title={allowPosting === false ? t('postingNotAllowed') : undefined}
                     onClick={() => {

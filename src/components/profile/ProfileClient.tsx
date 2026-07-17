@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { getModelsByProvider } from '@/lib/config/ai-models';
 import type { UserAIPreferences } from '@/types/ai-preferences';
 import { useTranslations } from 'next-intl';
+import { useTheme } from '@/lib/hooks/use-theme';
 
 type Profile = {
   id: number;
@@ -43,6 +44,15 @@ export default function ProfileClient({ profile, preferences }: Props) {
   const [openaiKey, setOpenaiKey] = useState('');
   const [anthropicKey, setAnthropicKey] = useState('');
   const [openrouterKey, setOpenrouterKey] = useState('');
+
+  // Apply theme from preferences on mount
+  const { setTheme } = useTheme();
+
+  useEffect(() => {
+    if (preferences?.theme) {
+      setTheme(preferences.theme as 'light' | 'dark' | 'system');
+    }
+  }, [preferences.theme, setTheme]);
 
   async function saveProfile(e: React.FormEvent) {
     e.preventDefault();
@@ -190,7 +200,7 @@ export default function ProfileClient({ profile, preferences }: Props) {
   };
 
   return (
-    <div className="w-full text-[color:var(--foreground)]">
+    <div className="w-full text-(--foreground)">
       <div className="mx-auto max-w-[min(94vw,1400px)] px-4 md:px-[4vw] lg:px-[6vw] py-10 mt-15">
         <header className="mb-6">
           <h1 className="text-3xl font-semibold">{t('title')}</h1>
@@ -198,16 +208,16 @@ export default function ProfileClient({ profile, preferences }: Props) {
         </header>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-[2.5vw]">
-          <section className="rounded-xl bg-[color:var(--darkelbg)] p-6 md:p-[2.5vw] xl:p-[2vw] shadow">
+          <section className="rounded-xl bg-(--darkelbg) p-6 md:p-[2.5vw] xl:p-[2vw] shadow">
             <h2 className="text-xl font-semibold mb-4">{t('accountDetails')}</h2>
             <form onSubmit={saveProfile} className="flex flex-col gap-6">
               <label className="flex flex-col gap-2">
                 <span className="text-lg">{t('name')}</span>
-                <input className="border border-gray-300 text-[clamp(1rem,0.95rem+0.3vw,1.125rem)] rounded-md px-3 py-2 bg-white text-[color:var(--secondary)] focus:outline-none focus:ring-2 focus:ring-emphasis" value={name} onChange={e => setName(e.target.value)} autoComplete="name" />
+                <input className="border border-gray-300 text-[clamp(1rem,0.95rem+0.3vw,1.125rem)] rounded-md px-3 py-2 bg-white text-(--secondary) focus:outline-none focus:ring-2 focus:ring-(--golden)" value={name} onChange={e => setName(e.target.value)} autoComplete="name" />
               </label>
               <label className="flex flex-col gap-2">
                 <span className="text-lg">{t('email')}</span>
-                <input className="border border-gray-300 text-[clamp(1rem,0.95rem+0.3vw,1.125rem)] rounded-md px-3 py-2 bg-white text-[color:var(--secondary)] focus:outline-none focus:ring-2 focus:ring-emphasis" value={email} onChange={e => setEmail(e.target.value)} autoComplete="email" />
+                <input className="border border-gray-300 text-[clamp(1rem,0.95rem+0.3vw,1.125rem)] rounded-md px-3 py-2 bg-white text-(--secondary) focus:outline-none focus:ring-2 focus:ring-(--golden)" value={email} onChange={e => setEmail(e.target.value)} autoComplete="email" />
               </label>
               <button className="mt-2 text-lg cursor-pointer bg-[color:var(--emphasis)] text-white font-semibold py-2 px-4 lg:px-[1.8vw] rounded hover:opacity-85 transition-opacity duration-300 w-full md:w-auto">
                 {t('save')}
@@ -215,29 +225,29 @@ export default function ProfileClient({ profile, preferences }: Props) {
             </form>
           </section>
 
-          <section className="rounded-xl bg-[color:var(--darkelbg)] p-6 md:p-[2.5vw] xl:p-[2vw] shadow">
+          <section className="rounded-xl bg-(--darkelbg) p-6 md:p-[2.5vw] xl:p-[2vw] shadow">
             <h2 className="text-xl font-semibold mb-4">{t('aiPreferences')}</h2>
             <form onSubmit={saveAiPrefs} className="flex flex-col gap-6">
               <label className="flex flex-col gap-2">
                 <span className="text-lg">{t('aiProvider')}</span>
                 <div className="flex gap-4">
                   <label className="flex items-center gap-2">
-                    <input type="radio" name="provider" value="openai" checked={aiPrefs.provider === 'openai'} onChange={() => setAiPrefs({ ...aiPrefs, provider: 'openai', model: 'gpt-4o-mini' })} className="text-[color:var(--emphasis)]" />
+                    <input type="radio" name="provider" value="openai" checked={aiPrefs.provider === 'openai'} onChange={() => setAiPrefs({ ...aiPrefs, provider: 'openai', model: 'gpt-4o-mini' })} className="text-[color:var(--golden)] accent-(--foreground)" />
                     <span>OpenAI</span>
                   </label>
                   <label className="flex items-center gap-2">
-                    <input type="radio" name="provider" value="claude" checked={aiPrefs.provider === 'claude'} onChange={() => setAiPrefs({ ...aiPrefs, provider: 'claude', model: 'claude-3-5-sonnet-20241022' })} className="text-[color:var(--emphasis)]" />
+                    <input type="radio" name="provider" value="claude" checked={aiPrefs.provider === 'claude'} onChange={() => setAiPrefs({ ...aiPrefs, provider: 'claude', model: 'claude-3-5-sonnet-20241022' })} className="text-[color:var(--golden)] accent-(--foreground)" />
                     <span>Claude</span>
                   </label>
                   <label className="flex items-center gap-2">
-                    <input type="radio" name="provider" value="openrouter" checked={aiPrefs.provider === 'openrouter'} onChange={() => setAiPrefs({ ...aiPrefs, provider: 'openrouter', model: 'openrouter/auto' })} className="text-[color:var(--emphasis)]" />
+                    <input type="radio" name="provider" value="openrouter" checked={aiPrefs.provider === 'openrouter'} onChange={() => setAiPrefs({ ...aiPrefs, provider: 'openrouter', model: 'openrouter/auto' })} className="text-[color:var(--golden)] accent-(--foreground)" />
                     <span>OpenRouter</span>
                   </label>
                 </div>
               </label>
               <label className="flex flex-col gap-2">
                 <span className="text-lg">{t('model')}</span>
-                <select className="border border-gray-300 text-[clamp(1rem,0.95rem+0.3vw,1.125rem)] rounded-md px-3 py-2 bg-white text-[color:var(--secondary)] focus:outline-none focus:ring-2 focus:ring-emphasis" value={aiPrefs.model} onChange={_e => setAiPrefs({ ...aiPrefs, model: _e.target.value })}>
+                <select className="border border-gray-300 text-[clamp(1rem,0.95rem+0.3vw,1.125rem)] rounded-md px-3 py-2 bg-white text-(--secondary) focus:outline-none focus:ring-2 focus:ring-(--golden)" value={aiPrefs.model} onChange={_e => setAiPrefs({ ...aiPrefs, model: _e.target.value })}>
                   {getModelsByProvider(aiPrefs.provider).map(model => (
                     <option key={model.id} value={model.id}>{model.name} - {model.description}</option>
                   ))}
@@ -245,8 +255,8 @@ export default function ProfileClient({ profile, preferences }: Props) {
               </label>
               <label className="flex flex-col gap-2">
                 <span className="text-lg">{t('maxTokens')}</span>
-                <input type="number" min="1" max="200000" className="border border-gray-300 text-[clamp(1rem,0.95rem+0.3vw,1.125rem)] rounded-md px-3 py-2 bg-white text-[color:var(--secondary)] focus:outline-none focus:ring-2 focus:ring-emphasis" placeholder={aiPrefs.maxTokens.toString()} onChange={e => setAiPrefs({ ...aiPrefs, maxTokens: parseInt(e.target.value) || 512 })} />
-                <span className="text-sm text-gray-500">{t('maxTokensHint')}</span>
+                <input type="number" min="1" max="200000" className="border border-gray-300 text-[clamp(1rem,0.95rem+0.3vw,1.125rem)] rounded-md px-3 py-2 bg-white text-(--secondary) focus:outline-none focus:ring-2 focus:ring-(--golden)" placeholder={aiPrefs.maxTokens.toString()} onChange={e => setAiPrefs({ ...aiPrefs, maxTokens: parseInt(e.target.value) || 512 })} />
+                <span className="text-sm text-(--secondary)">{t('maxTokensHint')}</span>
               </label>
               <button className="mt-2 text-lg cursor-pointer bg-[color:var(--emphasis)] text-white font-semibold py-2 px-4 lg:px-[1.8vw] rounded hover:opacity-85 transition-opacity duration-300 w-full md:w-auto">
                 {t('saveAiPreferences')}
@@ -254,23 +264,23 @@ export default function ProfileClient({ profile, preferences }: Props) {
             </form>
           </section>
 
-          <section className="rounded-xl bg-[color:var(--darkelbg)] p-6 md:p-[2.5vw] xl:p-[2vw] shadow">
+          <section className="rounded-xl bg-(--darkelbg) p-6 md:p-[2.5vw] xl:p-[2vw] shadow">
             <h2 className="text-xl font-semibold mb-4">{t('apiKeys')}</h2>
             <form onSubmit={saveProfile} className="flex flex-col gap-6">
               <label className="flex flex-col gap-2">
                 <span className="text-lg">{t('openaiKey')}</span>
-                <input type="password" className="border border-gray-300 text-[clamp(1rem,0.95rem+0.3vw,1.125rem)] rounded-md px-3 py-2 bg-white text-[color:var(--secondary)] focus:outline-none focus:ring-2 focus:ring-emphasis" value={openaiKey} onChange={e => setOpenaiKey(e.target.value)} placeholder="sk-..." autoComplete="off" />
-                <span className="text-sm text-gray-500">{t('apiKeyHint')}</span>
+                <input type="password" className="border border-gray-300 text-[clamp(1rem,0.95rem+0.3vw,1.125rem)] rounded-md px-3 py-2 bg-white text-(--secondary) focus:outline-none focus:ring-2 focus:ring-(--golden)" value={openaiKey} onChange={e => setOpenaiKey(e.target.value)} placeholder="sk-..." autoComplete="off" />
+                <span className="text-sm text-(--secondary)">{t('apiKeyHint')}</span>
               </label>
               <label className="flex flex-col gap-2">
                 <span className="text-lg">{t('anthropicKey')}</span>
-                <input type="password" className="border border-gray-300 text-[clamp(1rem,0.95rem+0.3vw,1.125rem)] rounded-md px-3 py-2 bg-white text-[color:var(--secondary)] focus:outline-none focus:ring-2 focus:ring-emphasis" value={anthropicKey} onChange={e => setAnthropicKey(e.target.value)} placeholder="anthropic-key..." autoComplete="off" />
-                <span className="text-sm text-gray-500">{t('apiKeyHint')}</span>
+                <input type="password" className="border border-gray-300 text-[clamp(1rem,0.95rem+0.3vw,1.125rem)] rounded-md px-3 py-2 bg-white text-(--secondary) focus:outline-none focus:ring-2 focus:ring-(--golden)" value={anthropicKey} onChange={e => setAnthropicKey(e.target.value)} placeholder="anthropic-key..." autoComplete="off" />
+                <span className="text-sm text-(--secondary)">{t('apiKeyHint')}</span>
               </label>
               <label className="flex flex-col gap-2">
                 <span className="text-lg">{t('openrouterKey')}</span>
-                <input type="password" className="border border-gray-300 text-[clamp(1rem,0.95rem+0.3vw,1.125rem)] rounded-md px-3 py-2 bg-white text-[color:var(--secondary)] focus:outline-none focus:ring-2 focus:ring-emphasis" value={openrouterKey} onChange={e => setOpenrouterKey(e.target.value)} placeholder="sk-or-..." autoComplete="off" />
-                <span className="text-sm text-gray-500">{t('apiKeyHint')}</span>
+                <input type="password" className="border border-gray-300 text-[clamp(1rem,0.95rem+0.3vw,1.125rem)] rounded-md px-3 py-2 bg-white text-(--secondary) focus:outline-none focus:ring-2 focus:ring-(--golden)" value={openrouterKey} onChange={e => setOpenrouterKey(e.target.value)} placeholder="sk-or-..." autoComplete="off" />
+                <span className="text-sm text-(--secondary)">{t('apiKeyHint')}</span>
               </label>
               <button className="mt-2 text-lg cursor-pointer bg-[color:var(--emphasis)] text-white font-semibold py-2 px-4 lg:px-[1.8vw] rounded hover:opacity-85 transition-opacity duration-300 w-full md:w-auto">
                 {t('saveApiKeys')}
@@ -278,12 +288,12 @@ export default function ProfileClient({ profile, preferences }: Props) {
             </form>
           </section>
 
-          <section className="rounded-xl bg-[color:var(--darkelbg)] p-6 md:p-[2.5vw] xl:p-[2vw] shadow">
+          <section className="rounded-xl bg-(--darkelbg) p-6 md:p-[2.5vw] xl:p-[2vw] shadow">
             <h2 className="text-xl font-semibold mb-4">{t('preferences')}</h2>
             <form onSubmit={savePrefs} className="flex flex-col gap-6">
               <label className="flex flex-col gap-2">
                 <span className="text-lg">{t('theme')}</span>
-                <select className="border border-gray-300 text-[clamp(1rem,0.95rem+0.3vw,1.125rem)] rounded-md px-3 py-2 bg-white text-[color:var(--secondary)] focus:outline-none focus:ring-2 focus:ring-emphasis" value={prefs.theme || "system"} onChange={_e => setPrefs({ ...prefs, theme: _e.target.value })}>
+                <select className="border border-gray-300 text-[clamp(1rem,0.95rem+0.3vw,1.125rem)] rounded-md px-3 py-2 bg-white text-(--secondary) focus:outline-none focus:ring-2 focus:ring-(--golden)" value={prefs.theme || "system"} onChange={_e => { const val = _e.target.value; setPrefs({ ...prefs, theme: val }); setTheme(val as 'light' | 'dark' | 'system'); }}>
                   <option value="system">{t('themeSystem')}</option>
                   <option value="light">{t('themeLight')}</option>
                   <option value="dark">{t('themeDark')}</option>
@@ -295,16 +305,16 @@ export default function ProfileClient({ profile, preferences }: Props) {
             </form>
           </section>
 
-          <section className="rounded-xl bg-[color:var(--darkelbg)] p-6 md:p-[2.5vw] xl:p-[2vw] shadow md:col-span-2">
+          <section className="rounded-xl bg-(--darkelbg) p-6 md:p-[2.5vw] xl:p-[2vw] shadow md:col-span-2">
             <h2 className="text-xl font-semibold mb-4">{t('changePassword')}</h2>
             <form onSubmit={changePassword} className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <label className="flex flex-col gap-2 md:col-span-1">
                 <span className="text-lg">{t('currentPassword')}</span>
-                <input type="password" placeholder={t('currentPassword')} className="border border-gray-300 text-[clamp(1rem,0.95rem+0.3vw,1.125rem)] rounded-md px-3 py-2 bg-white text-[color:var(--secondary)] focus:outline-none focus:ring-2 focus:ring-emphasis" value={oldPassword} onChange={e => setOldPassword(e.target.value)} autoComplete="current-password" />
+                <input type="password" placeholder={t('currentPassword')} className="border border-gray-300 text-[clamp(1rem,0.95rem+0.3vw,1.125rem)] rounded-md px-3 py-2 bg-white text-(--secondary) focus:outline-none focus:ring-2 focus:ring-(--golden)" value={oldPassword} onChange={e => setOldPassword(e.target.value)} autoComplete="current-password" />
               </label>
               <label className="flex flex-col gap-2 md:col-span-1">
                 <span className="text-lg">{t('newPassword')}</span>
-                <input type="password" placeholder={t('newPassword')} className="border border-gray-300 text-[clamp(1rem,0.95rem+0.3vw,1.125rem)] rounded-md px-3 py-2 bg-white text-[color:var(--secondary)] focus:outline-none focus:ring-2 focus:ring-emphasis" value={newPassword} onChange={e => setNewPassword(e.target.value)} autoComplete="new-password" />
+                <input type="password" placeholder={t('newPassword')} className="border border-gray-300 text-[clamp(1rem,0.95rem+0.3vw,1.125rem)] rounded-md px-3 py-2 bg-white text-(--secondary) focus:outline-none focus:ring-2 focus:ring-(--golden)" value={newPassword} onChange={e => setNewPassword(e.target.value)} autoComplete="new-password" />
               </label>
               <div className="flex items-end md:col-span-1">
                 <button className="w-full md:w-auto text-lg cursor-pointer bg-[color:var(--emphasis)] text-white font-semibold py-2 px-4 lg:px-[1.8vw] rounded hover:opacity-85 transition-opacity duration-300">
@@ -314,19 +324,15 @@ export default function ProfileClient({ profile, preferences }: Props) {
             </form>
           </section>
 
-          <section className="rounded-xl bg-[color:var(--darkelbg)] p-6 md:p-[2.5vw] xl:p-[2vw] shadow md:col-span-2">
+          <section className="rounded-xl bg-(--darkelbg) p-6 md:p-[2.5vw] xl:p-[2vw] shadow md:col-span-2">
             <h2 className="text-xl font-semibold mb-4">{t('dataManagement')}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
                 <h3 className="text-lg font-medium">{t('exportData')}</h3>
-                <p className="text-sm text-gray-600">{t('exportDataHint')}</p>
+                <p className="text-sm text-(--secondary)">{t('exportDataHint')}</p>
                 <div className="space-y-3">
-                  <button onClick={handleExportAll} className="w-full text-lg cursor-pointer bg-[color:var(--emphasis)] text-white font-semibold py-2 px-4 rounded hover:opacity-85 transition-opacity duration-300">
-                    {t('exportMd')}
-                  </button>
-                  <button onClick={handleExportAllTxt} className="w-full text-lg cursor-pointer bg-gray-600 text-white font-semibold py-2 px-4 rounded hover:opacity-85 transition-opacity duration-300">
-                    {t('exportTxt')}
-                  </button>
+                  <button onClick={handleExportAll} className="w-full text-lg cursor-pointer bg-[color:var(--emphasis)] text-white font-semibold py-2 px-4 rounded hover:opacity-85 transition-opacity duration-300">{t('exportMd')}</button>
+                  <button onClick={handleExportAllTxt} className="w-full text-lg cursor-pointer bg-(--darkelbg) text-(--foreground) font-semibold py-2 px-4 rounded hover:opacity-85 transition-opacity duration-300">{t('exportTxt')}</button>
                   <div className="grid grid-cols-2 gap-3">
                     <button onClick={() => handleExportZip('md')} className="w-full text-lg cursor-pointer bg-(--darkelbg) text-(--foreground) border border-(--secondary)/40 font-semibold py-2 px-4 rounded hover:opacity-85 transition-opacity duration-300">
                       {t('exportZipMd')}
@@ -339,13 +345,11 @@ export default function ProfileClient({ profile, preferences }: Props) {
               </div>
               <div className="space-y-4">
                 <h3 className="text-lg font-medium">{t('importData')}</h3>
-                <p className="text-sm text-gray-600">{t('importDataHint')}</p>
+                <p className="text-sm text-(--secondary)">{t('importDataHint')}</p>
                 <div className="space-y-3">
                   <input type="file" id="import-file" accept=".md,.txt" onChange={handleFileImport} className="hidden" />
-                  <label htmlFor="import-file" className="w-full text-lg cursor-pointer bg-green-600 text-white font-semibold py-2 px-4 rounded hover:opacity-85 transition-opacity duration-300 block text-center">
-                    {t('chooseFile')}
-                  </label>
-                  <p className="text-xs text-gray-500">{t('importSupportedFormats')}</p>
+                  <label htmlFor="import-file" className="w-full text-lg cursor-pointer bg-[color:var(--emphasis)] text-white font-semibold py-2 px-4 rounded hover:opacity-85 transition-opacity duration-300 block text-center">{t('chooseFile')}</label>
+                  <p className="text-xs text-(--secondary)">{t('importSupportedFormats')}</p>
                 </div>
               </div>
             </div>
